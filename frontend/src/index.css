@@ -1,1 +1,50 @@
 @import "tailwindcss";
+
+html{
+  overflow-y: auto;
+}
+
+.cart-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(249 115 22 / 0.65) rgb(255 255 255 / 0.04);
+}
+
+.cart-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cart-scrollbar::-webkit-scrollbar-track {
+  background: rgb(255 255 255 / 0.04);
+  border-radius: 9999px;
+}
+
+.cart-scrollbar::-webkit-scrollbar-thumb {
+  background: rgb(249 115 22 / 0.65);
+  border: 1px solid rgb(10 10 10 / 0.8);
+  border-radius: 9999px;
+}
+
+.cart-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgb(249 115 22 / 0.9);
+}
+
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 12s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+  }
+}

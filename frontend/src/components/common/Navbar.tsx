@@ -2,7 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { UserRound, ShoppingCart, Menu, X, ArrowRight } from "lucide-react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import SearchBar, { SearchBarPanel, SearchBarToggle } from "./SearchBar";
-import CartDrawer, { type CartDrawerProps } from "../layout/CartDrawer";
+import CartDrawer, {
+  type CartDrawerProps,
+  type CartItem,
+} from "../layout/CartDrawer";
 
 const links = [
   { label: "Men", to: "/men" },
@@ -13,18 +16,108 @@ const links = [
 
 type NavbarProps = {
   cartCount?: number;
-  cart?: Pick<
-    CartDrawerProps,
-    "items" | "onQuantityChange" | "onRemoveItem"
-  >;
+  cart?: Pick<CartDrawerProps, "items" | "onQuantityChange" | "onRemoveItem">;
 };
+
+export const products: CartItem[] = [
+  {
+    productId: "prod-001",
+    name: "Classic Cotton T-Shirt",
+    price: 599,
+    quantity: 1,
+    color: "Black",
+    size: "M",
+    image: "/favicon.svg",
+  },
+  {
+    productId: "prod-002",
+    name: "Premium Oversized T-Shirt",
+    price: 899,
+    quantity: 1,
+    color: "White",
+    size: "L",
+    image: "/images/tshirt-white.jpg",
+  },
+  {
+    productId: "prod-003",
+    name: "Slim Fit Denim Jeans",
+    price: 1499,
+    quantity: 1,
+    color: "Blue",
+    size: "32",
+    image: "/images/denim-jeans.jpg",
+  },
+  {
+    productId: "prod-004",
+    name: "Casual Oxford Shirt",
+    price: 1299,
+    quantity: 1,
+    color: "Sky Blue",
+    size: "L",
+    image: "/images/oxford-shirt.jpg",
+  },
+  {
+    productId: "prod-005",
+    name: "Classic Hoodie",
+    price: 1799,
+    quantity: 1,
+    color: "Gray",
+    size: "XL",
+    image: "/images/hoodie-gray.jpg",
+  },
+  {
+    productId: "prod-006",
+    name: "Regular Fit Polo Shirt",
+    price: 999,
+    quantity: 1,
+    color: "Navy Blue",
+    size: "M",
+    image: "/images/polo-shirt.jpg",
+  },
+  {
+    productId: "prod-007",
+    name: "Casual Chino Pants",
+    price: 1599,
+    quantity: 1,
+    color: "Beige",
+    size: "34",
+    image: "/images/chino-pants.jpg",
+  },
+  {
+    productId: "prod-008",
+    name: "Lightweight Bomber Jacket",
+    price: 2499,
+    quantity: 1,
+    color: "Olive Green",
+    size: "L",
+    image: "/images/bomber-jacket.jpg",
+  },
+  {
+    productId: "prod-009",
+    name: "Classic Sweatshirt",
+    price: 1399,
+    quantity: 1,
+    color: "Brown",
+    size: "M",
+    image: "/images/sweatshirt.jpg",
+  },
+  {
+    productId: "prod-010",
+    name: "Premium Cargo Pants",
+    price: 1899,
+    quantity: 1,
+    color: "Black",
+    size: "32",
+    image: "/images/cargo-pants.jpg",
+  },
+];
 
 const Navbar = ({ cartCount = 0, cart }: NavbarProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
-  const items = cart?.items ?? [];
+  const items = products ?? [];
   const displayedCartCount =
     cart?.items.reduce((count, item) => count + item.quantity, 0) ?? cartCount;
   const closeCart = useCallback(() => setCartOpen(false), []);
@@ -209,7 +302,7 @@ const Navbar = ({ cartCount = 0, cart }: NavbarProps) => {
           </Link>
           <Link
             to="/cart"
-            className="flex items-center justify-center gap-2 rounded-xl bg-orange-500 py-3 text-sm font-semibold text-white hover:bg-orange-600 active:scale-95 transition"
+            className="flex items-centeclassNamer justify-center gap-2 rounded-xl bg-orange-500 py-3 text-sm font-semibold text-white hover:bg-orange-600 active:scale-95 transition"
           >
             <ShoppingCart size={18} /> Cart
             {displayedCartCount > 0 && ` (${displayedCartCount})`}

@@ -8,7 +8,6 @@ const Header = () => {
             <Topbar/>
             {/*Navbar */}
             <Navbar/>
-            {/*Footer */}
 
         </header>
     );
