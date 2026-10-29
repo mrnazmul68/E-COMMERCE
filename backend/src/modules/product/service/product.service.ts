@@ -1,75 +1,93 @@
+import type { Types } from "mongoose";
 import { v2 as cloudinary, type UploadApiResponse } from "cloudinary";
-import type { CreateProductInput } from "@modules/product/validation/product.validation.js";
 import { ProductRepository } from "@modules/product/repository/product.repository.js";
-import type { ProductDocument } from "@modules/product/model/product.model.js";
 import { ApiError } from "@utils/apiError.js";
 import { HTTP_STATUS } from "@shared/httpcode.js";
+import type {
+  ProductCreateInput,
+  ProductUpdateInput,
+} from "../validation/product.validation.js";
 
-type CreateProductData = CreateProductInput["body"];
+export interface CreateProductData extends ProductCreateInput {
+  user: Types.ObjectId | string;
+  isFeatured?: boolean;
+  isPublished?: boolean;
+}
 
 export class ProductService {
   constructor(private readonly productRepository = new ProductRepository()) {}
 
-  //todo: create product
-  async createProduct(
-    productData: CreateProductData,
-    files: Express.Multer.File[],
-  ): Promise<ProductDocument> {
-    const uploadedImages: UploadApiResponse[] = [];
+  // create product
+  async createProduct(productData: CreateProductData) {
+    return this.productRepository.create(productData);
+  }
 
-    try {
-      for (const file of files) {
-        uploadedImages.push(await this.uploadImage(file.buffer));
-      }
+  // Update product
+  async updateProduct(productData: ProductUpdateInput, productId: string) {
+    const product = await this.productRepository.findById(productId);
 
-      return await this.productRepository.create({
-        ...productData,
-        image: uploadedImages.map((image) => image.secure_url),
-      });
-    } catch (error) {
-      await Promise.allSettled(
-        uploadedImages.map((image) =>
-          cloudinary.uploader.destroy(image.public_id),
-        ),
-      );
-      throw error;
+    if (!product) {
+      throw new ApiError(HTTP_STATUS.NOT_FOUND, "Product not found");
     }
+
+    const {
+      name,
+      description,
+      price,
+      discountPrice,
+      countInStock,
+      sku,
+      category,
+      brand,
+      sizes,
+      colors,
+      collections,
+      material,
+      gender,
+      images,
+      tags,
+      metaTitle,
+      metaDescription,
+      metaKeywords,
+      dimensions,
+      weight,
+    } = productData;
+
+    product.name = name ?? product.name;
+    product.description = description ?? product.description;
+    product.price = price ?? product.price;
+    product.discountPrice = discountPrice ?? product.discountPrice;
+    product.countInStock = countInStock ?? product.countInStock;
+    product.sku = sku ?? product.sku;
+    product.category = category ?? product.category;
+    product.brand = brand ?? product.brand;
+    product.sizes = sizes ?? product.sizes;
+    product.colors = colors ?? product.colors;
+    product.collections = collections ?? product.collections;
+    product.material = material ?? product.material;
+    product.gender = gender ?? product.gender;
+    product.images = (images as any) ?? product.images;
+    product.tags = tags ?? product.tags;
+    product.metaTitle = metaTitle ?? product.metaTitle;
+    product.metaDescription = metaDescription ?? product.metaDescription;
+    product.metaKeywords = metaKeywords ?? product.metaKeywords;
+    product.dimensions = dimensions ?? product.dimensions;
+    product.weight = weight ?? product.weight;
+
+    return await product.save();
   }
-  //todo: upload images
-  private uploadImage(buffer: Buffer): Promise<UploadApiResponse> {
-    return new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        { folder: "e-commerce/products", resource_type: "image" },
-        (error, result) => {
-          if (error || !result) {
-            reject(
-              new ApiError(
-                HTTP_STATUS.BAD_GATEWAY,
-                error?.message ?? "Product image upload failed",
-              ),
-            );
-            return;
-          }
 
-          resolve(result);
-        },
-      );
-
-      stream.end(buffer);
-    });
-  }
-
-  //todo: remove product
+  // Delete a product
   async removeProduct(productId: string) {
     return await this.productRepository.removeProduct(productId);
   }
 
-  //todo: list product
+  // list product
   async listProduct() {
     return await this.productRepository.listProduct();
   }
 
-  //todo: single product
+  // single product
   async singleProduct(productId: string) {
     const product = await this.productRepository.findById(productId);
     if (!product) {

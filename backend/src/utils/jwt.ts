@@ -5,9 +5,9 @@ interface TokenPlayload extends JwtPayload {
   _id: string;
 }
 
-export const generateAccessToken = (userId: string, sessionId: string) => {
+export const generateAccessToken = (userId: string, userRole:string) => {
   return jwt.sign(
-    { _id: userId, sessionId: sessionId },
+    { _id: userId,role:userRole },
     env.JWT_ACCESS_SECRET,
     {
       expiresIn: "15d",
@@ -15,8 +15,8 @@ export const generateAccessToken = (userId: string, sessionId: string) => {
   );
 };
 
-export const generateRefreshToken = (userId: string) => {
-  return jwt.sign({ _id: userId }, env.JWT_REFRESH_SECRET, {
+export const generateRefreshToken = (userId: string, userRole: string) => {
+  return jwt.sign({ _id: userId, role: userRole }, env.JWT_REFRESH_SECRET, {
     expiresIn: "15d",
   });
 };
@@ -30,4 +30,3 @@ export const verifyRefreshToken = (token: string): TokenPlayload => {
 };
 
 //todo: generate token pair
-

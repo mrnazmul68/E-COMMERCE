@@ -8,7 +8,7 @@ import CartDrawer, {
 } from "../layout/CartDrawer";
 
 const links = [
-  { label: "Men", to: "/men" },
+  { label: "Men", to: "/collections/all" },
   { label: "Women", to: "/women" },
   { label: "Topwear", to: "/topwear" },
   { label: "Shop", to: "/shop" },
@@ -116,6 +116,7 @@ const Navbar = ({ cartCount = 0, cart }: NavbarProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [login, setLogin] = useState(false);
   const location = useLocation();
   const items = products ?? [];
   const displayedCartCount =
@@ -218,7 +219,7 @@ const Navbar = ({ cartCount = 0, cart }: NavbarProps) => {
                 </button>
 
                 <Link
-                  to="/profile"
+                  to={login ? "/profile" : "/login"}
                   aria-label="Profile"
                   className={`${iconBtn} hidden sm:inline-flex`}
                 >

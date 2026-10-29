@@ -54,6 +54,7 @@ const ProductDetails = () => {
   const [selectedColor, setSelectedColor] = useState("Black");
   const [selectedSize, setSelectedSize] = useState("M");
   const [quantity, setQuantity] = useState(1);
+  const [isLoading, setIsLoading] = useState(false)
   const discountPercentage =
     product.originalPrice > product.price
       ? Math.round(
@@ -65,7 +66,14 @@ const ProductDetails = () => {
 
 
   const handleCart = ()=>{
-    toast.info("Toast is working")
+    if(!selectedColor || !selectedSize){
+      toast.error("Select color and size")
+      return; 
+    }
+
+    setIsLoading(true)
+    toast.info("Product added to cart")
+    setIsLoading(false)
   }
 
   return (
@@ -252,7 +260,7 @@ const ProductDetails = () => {
                 className="flex animate-bounce h-12 min-h-12 w-full shrink-0 flex-1 items-center justify-center gap-2 rounded-lg bg-orange-500 px-5 font-semibold text-white transition-colors hover:bg-orange-600 hover:animate-bounce active:animate-bounce active:scale-[0.98] sm:h-14 sm:min-h-14 sm:w-auto md:h-12 md:min-h-12"
               >
                 <ShoppingCart size={19} />
-                Add to Cart
+                {isLoading ? "Adding...": "Add to cart"}
               </button>
             </div>
           </div>

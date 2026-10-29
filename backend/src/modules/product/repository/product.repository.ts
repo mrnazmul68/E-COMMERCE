@@ -1,14 +1,10 @@
-import {
-  ProductModel,
-  type Product,
-  type ProductDocument,
-} from "@modules/product/model/product.model.js";
+import { Product } from "@modules/product/model/product.model.js";
 
 export class ProductRepository {
-  constructor(private readonly model = ProductModel) {}
+  constructor(private readonly model = Product) {}
 
   //todo: create product
-  async create(productData: Partial<Product>): Promise<ProductDocument> {
+  async create(productData: any): Promise<any> {
     return await this.model.create(productData);
   }
 

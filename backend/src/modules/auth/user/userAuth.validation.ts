@@ -30,21 +30,17 @@ export const USER_VALIDATION = {
       VALIDATION.PASSWORD.MAX_LENGTH_MESSAGE,
     ),
 
-  AVATAR: z
-    .url(VALIDATION.AVATAR.INVALID_MESSAGE)
-    .max(VALIDATION.AVATAR.MAX_LENGTH, VALIDATION.AVATAR.MAX_LENGTH_MESSAGE)
-    .nullable()
-    .optional(),
-
-  ROLE: z.enum(VALIDATION.ROLE.VALUES, {
-    error: VALIDATION.ROLE.INVALID_MESSAGE,
-  }),
+  ROLE: z
+    .enum(VALIDATION.ROLE.VALUES, {
+      error: VALIDATION.ROLE.INVALID_MESSAGE,
+    })
+    .default("customer"),
 } as const;
 
 //todo: user register validation
 export const USER_REGISTER_VALIDATION = z.object({
   body: z.object({
-    firstName: USER_VALIDATION.NAME,
+    name: USER_VALIDATION.NAME,
     email: USER_VALIDATION.EMAIL,
     password: USER_VALIDATION.PASSWORD,
   }),
@@ -57,3 +53,8 @@ export const USER_LOGIN_VALIDATION = z.object({
     password: USER_VALIDATION.PASSWORD,
   }),
 });
+
+export type UserRegisterInput = z.infer<
+  typeof USER_REGISTER_VALIDATION.shape.body
+>;
+export type UserLoginInput = z.infer<typeof USER_LOGIN_VALIDATION.shape.body>;

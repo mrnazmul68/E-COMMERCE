@@ -20,17 +20,11 @@ const userService = new UserService();
 //todo: register
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
-  const { user, accessToken, refreshToken } = await userService.register(
-    {
-      name,
-      email,
-      password,
-    },
-    {
-      ip: req.ip ?? "unknown",
-      userAgent: req.get("user-agent") ?? "unknown",
-    },
-  );
+  const { user, accessToken, refreshToken } = await userService.register({
+    name,
+    email,
+    password,
+  });
 
   //set cookie
   res.cookie("refreshToken", refreshToken, refreshCookieOptions);
@@ -45,16 +39,10 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 //todo: login
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
-  const { user, accessToken, refreshToken } = await userService.login(
-    {
-      email,
-      password,
-    },
-    {
-      ip: req.ip ?? "unknown",
-      userAgent: req.get("user-agent") ?? "unknown",
-    },
-  );
+  const { user, accessToken, refreshToken } = await userService.login({
+    email,
+    password,
+  });
   //set cookie
   res.cookie("refreshToken", refreshToken, refreshCookieOptions);
 
@@ -67,14 +55,13 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
 //todo: profile
 export const profile = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.params.id as string;
-  if (!userId) {
-    throw new ApiError(HTTP_STATUS.BAD_REQUEST, "User id required");
+  const user = req.user;
+  if (!user) {
+    throw new ApiError(HTTP_STATUS.BAD_REQUEST, "User not found");
   }
-  const result = await userService.profile(userId);
   return new ApiResponse(
     HTTP_STATUS.OK,
-    result,
+    user,
     "Profile fetched successfully",
   ).send(res);
 });
@@ -84,13 +71,8 @@ export const refreshToken = asyncHandler(
   async (req: Request, res: Response) => {
     const oldRefreshToken = req.cookies.refreshToken;
 
-    const { accessToken, refreshToken } = await userService.refreshAccessToken(
-      oldRefreshToken,
-      {
-        ip: req.ip ?? "unknown",
-        userAgent: req.get("user-agent") ?? "unknown",
-      },
-    );
+    const { accessToken, refreshToken } =
+      await userService.refreshAccessToken(oldRefreshToken);
 
     res.cookie("refreshToken", refreshToken, refreshCookieOptions);
 

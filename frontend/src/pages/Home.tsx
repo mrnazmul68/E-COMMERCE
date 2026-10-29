@@ -2,6 +2,7 @@ import Hero from "../components/layout/Hero";
 import GenderCollectionSection from "../components/products/GenderCollectionSection";
 import NewArrivals from "../components/products/NewArrivals";
 import ProductDetails from "../components/products/ProductDetails";
+import YouMayAlsoLike from "../components/products/YouMayAlsoLike";
 
 const Home = () => {
   return (
@@ -10,6 +11,7 @@ const Home = () => {
       <GenderCollectionSection />
       <NewArrivals />
       <ProductDetails />
+      <YouMayAlsoLike/>
     </div>
   );
 };

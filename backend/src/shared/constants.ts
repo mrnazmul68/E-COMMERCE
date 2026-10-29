@@ -31,8 +31,8 @@ export const VALIDATION = {
   },
 
   ROLE: {
-    VALUES: ["user", "admin"],
-    INVALID_MESSAGE: "Role must be either user or admin",
+    VALUES: ["customer", "admin"],
+    INVALID_MESSAGE: "Role must be either customer or admin",
   },
 } as const;
 

@@ -53,16 +53,6 @@ const userSchema = new mongoose.Schema(
       ],
     },
 
-    avatar: {
-      type: String,
-      default: null,
-
-      maxlength: [
-        VALIDATION.AVATAR.MAX_LENGTH,
-        VALIDATION.AVATAR.MAX_LENGTH_MESSAGE,
-      ],
-    },
-
     role: {
       type: String,
 
@@ -71,12 +61,7 @@ const userSchema = new mongoose.Schema(
         message: VALIDATION.ROLE.INVALID_MESSAGE,
       },
 
-      default: "user",
-    },
-
-    isEmailVerified: {
-      type: Boolean,
-      default: false,
+      default: "customer",
     },
   },
   {

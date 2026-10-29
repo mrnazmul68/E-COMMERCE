@@ -36,32 +36,4 @@ export class UserRepository {
     return await this.model.findOne({ _id: id }).select(selectField).exec();
   }
 
-  //create session
-  async session(sessionData: Partial<SessionType>): Promise<SessionDocument> {
-    return await this.sessionModel.create(sessionData);
-  }
-
-  //find active session by user
-  async findActiveSessionsByUser(userId: string): Promise<SessionDocument[]> {
-    return await this.sessionModel
-      .find({ user: userId, revoked: false })
-      .select("+refreshTokenHash")
-      .exec();
-  }
-
-  //find active session by id
-  async findActiveSessionById(
-    sessionId: string,
-  ): Promise<SessionDocument | null> {
-    return await this.sessionModel
-      .findOne({ _id: sessionId, revoked: false })
-      .exec();
-  }
-
-  //revoke session
-  async revokeSession(sessionId: string): Promise<void> {
-    await this.sessionModel
-      .updateOne({ _id: sessionId }, { $set: { revoked: true } })
-      .exec();
-  }
 }
