@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "dev": "tsx --env-file=.env --watch server.ts",
+    "seed": "tsx --env-file=.env src/seeds.ts",
     "build": "tsc"
   },
   "keywords": [],
