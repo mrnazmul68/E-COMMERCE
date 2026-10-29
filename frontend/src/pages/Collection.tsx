@@ -27,7 +27,7 @@ const Collection = () => {
 
           <div className="flex items-center justify-between md:justify-end gap-4">
             <button
-              className="lg:hidden border p-2"
+              className="md:hidden border p-2"
               onClick={() => setMobileFilterOpen(true)}
             >
               <FaFilter />
@@ -43,14 +43,19 @@ const Collection = () => {
         </div>
       </header>
 
-      {/* Products */}
-      <Productgrid products={products} />
+      {/* MAIN CONTENT (SIDEBAR + PRODUCTS) */}
+      <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row gap-6 items-start">
+        {/* FILTER SIDEBAR */}
+        <FilterSidebar
+          mobileFilterOpen={mobileFilterOpen}
+          setMobileFilterOpen={setMobileFilterOpen}
+        />
 
-      {/* MOBILE FILTER */}
-      <FilterSidebar
-        mobileFilterOpen={mobileFilterOpen}
-        setMobileFilterOpen={setMobileFilterOpen}
-      />
+        {/* PRODUCTS */}
+        <main className="flex-1 min-w-0 w-full">
+          <Productgrid products={products} cols={3} />
+        </main>
+      </div>
     </div>
   );
 };

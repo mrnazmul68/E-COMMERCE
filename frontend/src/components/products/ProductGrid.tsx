@@ -18,8 +18,12 @@ export interface ProductCardData {
   discountPrice?: number;
   image: string;
 }
+interface ProductGridProps {
+  products: ProductCardData[];
+  cols?: number;
+}
 
-const Productgrid = ({ products }: { products: ProductCardData[] }) => {
+const Productgrid = ({ products, cols = 4 }: ProductGridProps) => {
   const [cartProducts, setCartProducts] = useState<string[]>([]);
 
   const addToCart = (productId: string) => {
@@ -29,7 +33,9 @@ const Productgrid = ({ products }: { products: ProductCardData[] }) => {
   };
 
   return (
-    <div className="grid grid-cols-2 px-4 md:px-22 py-4 md:py-8 gap-x-3 gap-y-6 sm:gap-x-5 sm:gap-y-8 md:grid-cols-3 lg:grid-cols-4">
+    <div
+      className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-${cols} gap-x-3 gap-y-6 sm:gap-x-5 sm:gap-y-8`}
+    >
       {products.map((product, index) => {
         const inCart = cartProducts.includes(product.id);
 
