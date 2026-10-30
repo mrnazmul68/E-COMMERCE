@@ -54,7 +54,7 @@ const ProductDetails = () => {
   const [selectedColor, setSelectedColor] = useState("Black");
   const [selectedSize, setSelectedSize] = useState("M");
   const [quantity, setQuantity] = useState(1);
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
   const discountPercentage =
     product.originalPrice > product.price
       ? Math.round(
@@ -64,26 +64,21 @@ const ProductDetails = () => {
       : 0;
   const savings = product.originalPrice - product.price;
 
-
-  const handleCart = ()=>{
-    if(!selectedColor || !selectedSize){
-      toast.error("Select color and size")
-      return; 
+  const handleCart = () => {
+    if (!selectedColor || !selectedSize) {
+      toast.error("Select color and size");
+      return;
     }
 
-    setIsLoading(true)
-    toast.info("Product added to cart")
-    setIsLoading(false)
-  }
+    setIsLoading(true);
+    toast.info("Product added to cart");
+    setIsLoading(false);
+  };
 
   return (
-    <section className="min-h-screen bg-black px-4 py-8 text-gray-50 sm:px-6 lg:px-8 lg:py-14">
+    <section className="min-h-screen bg-black px-4 text-gray-50">
       <div className="mx-auto max-w-7xl flex justify-center items-center flex-col">
-        <h2 className="text-4xl font-bold ">
-          Best <span className="text-orange-500">seller</span>
-        </h2>
-
-        <div className="grid grid-cols-1 gap-8 rounded-2xl bg-black p-4 shadow-sm sm:p-6 lg:grid-cols-2 lg:gap-12 lg:p-10">
+        <div className="grid grid-cols-1 gap-8 rounded-2xl bg-black shadow-sm sm:p-6 lg:grid-cols-2 lg:gap-12 lg:p-10">
           {/* Product Image */}
           <div>
             {/* main image */}
@@ -118,7 +113,7 @@ const ProductDetails = () => {
                   <img
                     src={image.url}
                     alt={image.altText}
-                    className="h-24 w-full object-cover sm:h-28"
+                    className="h-24 w-full object-cover sm:h-28 cursor-pointer"
                   />
                 </button>
               ))}
@@ -181,7 +176,7 @@ const ProductDetails = () => {
                     }`}
                   >
                     <span
-                      className="flex h-7 w-7 items-center justify-center rounded-full border border-black/10"
+                      className="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full border border-black/10"
                       style={{ backgroundColor: color }}
                     >
                       {selectedColor === color && (
@@ -214,7 +209,7 @@ const ProductDetails = () => {
                     type="button"
                     onClick={() => setSelectedSize(size)}
                     aria-pressed={selectedSize === size}
-                    className={`flex h-11 items-center justify-center rounded-lg border text-sm font-medium transition ${
+                    className={`cursor-pointer flex h-11 items-center justify-center rounded-lg border text-sm font-medium transition ${
                       selectedSize === size
                         ? "border-gray-900 bg-gray-900 text-white"
                         : "border-gray-200 hover:border-gray-900"
@@ -234,7 +229,7 @@ const ProductDetails = () => {
                   onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
                   disabled={quantity <= 1}
                   aria-label="Decrease quantity"
-                  className="flex h-full w-11 items-center justify-center disabled:opacity-30"
+                  className="flex h-full w-11 items-center justify-center disabled:opacity-30 cursor-pointer"
                 >
                   <Minus size={16} />
                 </button>
@@ -248,19 +243,19 @@ const ProductDetails = () => {
                   onClick={() => setQuantity((prev) => Math.min(10, prev + 1))}
                   disabled={quantity >= 10}
                   aria-label="Increase quantity"
-                  className="flex h-full w-11 items-center justify-center disabled:opacity-30"
+                  className="flex h-full w-11 items-center justify-center disabled:opacity-30 cursor-pointer"
                 >
                   <Plus size={16} />
                 </button>
               </div>
               {/* cart button */}
               <button
-              onClick={handleCart}
+                onClick={handleCart}
                 type="button"
-                className="flex animate-bounce h-12 min-h-12 w-full shrink-0 flex-1 items-center justify-center gap-2 rounded-lg bg-orange-500 px-5 font-semibold text-white transition-colors hover:bg-orange-600 hover:animate-bounce active:animate-bounce active:scale-[0.98] sm:h-14 sm:min-h-14 sm:w-auto md:h-12 md:min-h-12"
+                className="flex cursor-pointer animate-bounce h-12 min-h-12 w-full shrink-0 flex-1 items-center justify-center gap-2 rounded-lg bg-orange-500 px-5 font-semibold text-white transition-colors hover:bg-orange-600 hover:animate-bounce active:animate-bounce active:scale-[0.98] sm:h-14 sm:min-h-14 sm:w-auto md:h-12 md:min-h-12"
               >
                 <ShoppingCart size={19} />
-                {isLoading ? "Adding...": "Add to cart"}
+                {isLoading ? "Adding..." : "Add to cart"}
               </button>
             </div>
           </div>

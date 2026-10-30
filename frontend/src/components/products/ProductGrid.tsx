@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Check, ShoppingBag } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const formatPrice = (price: number) => `৳${price.toLocaleString("en-BD")}`;
 
@@ -51,12 +52,14 @@ const Productgrid = ({ products, cols = 4 }: ProductGridProps) => {
           >
             {/* Product Image */}
             <div className="relative aspect-4/5 overflow-hidden">
-              <img
-                src={product.image}
-                alt={product.name}
-                loading="lazy"
-                className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
-              />
+              <Link to={`/product/${product.id}`}>
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  loading="lazy"
+                  className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
+                />
+              </Link>
 
               <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent opacity-70" />
 

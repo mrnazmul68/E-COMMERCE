@@ -7,6 +7,7 @@ import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import MyOrders from "./pages/MyOrders";
 import Collection from "./pages/Collection";
+import ProductDetails from "./components/products/ProductDetails";
 
 const App = () => {
   return (
@@ -21,6 +22,7 @@ const App = () => {
           <Route path="profile" element={<Profile />} />
           <Route path="orders" element={<MyOrders />} />
           <Route path="collections/:collection" element={<Collection />} />
+          <Route path="product/:id" element={<ProductDetails />} />
         </Route>
         {/* <Route path="/admin" element={<AdminLayout />} /> */}
       </Routes>
