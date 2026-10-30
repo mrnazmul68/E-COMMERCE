@@ -1,5 +1,13 @@
-import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type Dispatch,
+  type MouseEvent,
+  type SetStateAction,
+} from "react";
 import { FaXmark } from "react-icons/fa6";
+import { useSearchParams } from "react-router-dom";
 
 type Props = {
   mobileFilterOpen: boolean;
@@ -17,9 +25,15 @@ type ProductFilters = {
   maxPrice: number;
 };
 
+type FilterEvent =
+  | ChangeEvent<HTMLInputElement>
+  | MouseEvent<HTMLButtonElement>;
+
 const FilterSidebar = ({ mobileFilterOpen, setMobileFilterOpen }: Props) => {
   const closeFilter = () => setMobileFilterOpen(false);
-  const [searchParams, setSearchParams] = useState([]);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [filters, setFilters] = useState<ProductFilters>({
     category: "",
     gender: "",
@@ -30,11 +44,11 @@ const FilterSidebar = ({ mobileFilterOpen, setMobileFilterOpen }: Props) => {
     minPrice: 0,
     maxPrice: 100,
   });
-  const [priceRange, setPriceRange] = useState([0, 100]);
-  const categories = ["Top wear", "Bottom wear"];
-  const sizes: string[] = ["XS", "S", "M", "L", "XL", "XXL"];
 
-  const colors: string[] = [
+  const categories = ["Top wear", "Bottom wear"];
+  const genders = ["Men", "Women", "Unisex"];
+
+  const colors = [
     "Black",
     "White",
     "Red",
@@ -48,10 +62,36 @@ const FilterSidebar = ({ mobileFilterOpen, setMobileFilterOpen }: Props) => {
     "Purple",
   ];
 
-  const genders: string[] = ["Men", "Women", "Unisex"];
+  const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
+  const materials = [
+    "Cotton",
+    "Polyester",
+    "Denim",
+    "Linen",
+    "Silk",
+    "Wool",
+    "Nylon",
+    "Leather",
+  ];
+
+  const brands = [
+    "Nike",
+    "Adidas",
+    "Zara",
+    "H&M",
+    "Uniqlo",
+    "Levi's",
+    "Puma",
+    "Gucci",
+  ];
+
+  // Read filters from URL
   useEffect(() => {
-    const params = Object.fromEntries([...searchParams]);
+    const params = Object.fromEntries(searchParams.entries());
+
+    const minPrice = Number(params.minPrice ?? 0);
+    const maxPrice = Number(params.maxPrice ?? 100);
 
     setFilters({
       category: params.category || "",
@@ -60,18 +100,107 @@ const FilterSidebar = ({ mobileFilterOpen, setMobileFilterOpen }: Props) => {
       size: params.size ? params.size.split(",") : [],
       material: params.material ? params.material.split(",") : [],
       brand: params.brand ? params.brand.split(",") : [],
-      minPrice: params.minPrice ? Number(params.minPrice) : 0,
-      maxPrice: params.maxPrice ? Number(params.maxPrice) : 100,
+      minPrice: Number.isFinite(minPrice) ? minPrice : 0,
+      maxPrice: Number.isFinite(maxPrice) ? maxPrice : 100,
+    });
+  }, [searchParams]);
+
+  // Handle checkbox and button events
+  const handleFilterChange = (e: FilterEvent) => {
+    const target = e.currentTarget;
+    const { name, value } = target;
+
+    const newFilters = { ...filters };
+
+    // Checkbox handling
+    if (target instanceof HTMLInputElement && target.type === "checkbox") {
+      if (name === "brand" || name === "material") {
+        const key: "brand" | "material" = name;
+
+        if (target.checked) {
+          newFilters[key] = [...newFilters[key], value];
+        } else {
+          newFilters[key] = newFilters[key].filter((item) => item !== value);
+        }
+      } else if (name === "category") {
+        newFilters.category = target.checked ? value : "";
+      } else if (name === "gender") {
+        newFilters.gender = target.checked ? value : "";
+      }
+    }
+
+    // Button handling
+    else if (target instanceof HTMLButtonElement) {
+      if (name === "size") {
+        // CHANGED: Removed unnecessary ArrayFilterKey type
+        if (newFilters.size.includes(value)) {
+          newFilters.size = newFilters.size.filter((item) => item !== value);
+        } else {
+          newFilters.size = [...newFilters.size, value];
+        }
+      } else if (name === "color") {
+        newFilters.color = newFilters.color === value ? "" : value;
+      }
+    }
+
+    // Price range handling
+    else if (target instanceof HTMLInputElement && target.type === "range") {
+      // CHANGED: Single slider only controls maxPrice
+      newFilters.maxPrice = Number(value);
+    }
+
+    setFilters(newFilters);
+
+    // Update URL after state calculation
+    updateUrlParams(newFilters);
+  };
+
+  // Serialize selected filters into URL
+  const updateUrlParams = (newFilters: ProductFilters) => {
+    // CHANGED: Preserve existing query params
+    const params = new URLSearchParams(searchParams);
+
+    // ADDED: Remove previous filter params before updating
+    const filterKeys: (keyof ProductFilters)[] = [
+      "category",
+      "gender",
+      "color",
+      "size",
+      "material",
+      "brand",
+      "minPrice",
+      "maxPrice",
+    ];
+
+    filterKeys.forEach((key) => params.delete(key));
+
+    // ADDED: Reset pagination when filters change
+    params.delete("page");
+
+    Object.entries(newFilters).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        if (value.length > 0) {
+          params.set(key, value.join(","));
+        }
+      }
+
+      // CHANGED: Skip default price values
+      else if (
+        value !== "" &&
+        !(key === "minPrice" && value === 0) &&
+        !(key === "maxPrice" && value === 100)
+      ) {
+        params.set(key, String(value));
+      }
     });
 
-    setPriceRange([
-      params.minPrice ? Number(params.minPrice) : 0,
-      params.maxPrice ? Number(params.maxPrice) : 100,
-    ]);
-  }, [searchParams]);
+    // CHANGED: replace prevents excessive browser history entries
+    setSearchParams(params, { replace: true });
+  };
+
   return (
     <>
-      {/* Background overlay (mobile only) */}
+      {/* Background overlay */}
       <div
         aria-hidden="true"
         onClick={closeFilter}
@@ -82,11 +211,11 @@ const FilterSidebar = ({ mobileFilterOpen, setMobileFilterOpen }: Props) => {
           }`}
       />
 
-      {/* Left drawer on mobile / Fixed left-side panel on tablet & computer */}
+      {/* Filter Sidebar */}
       <aside
         id="filter-sidebar"
         aria-label="Product filters"
-        className={`fixed inset-y-0 left-0 z-61 flex h-dvh w-80 max-w-[85%] flex-col overflow-y-auto bg-black p-6 text-white shadow-2xl transition-transform duration-300 ease-out motion-reduce:transition-none md:static md:z-auto md:h-auto md:w-64 md:shrink-0 md:translate-x-0 md:overflow-visible md:bg-transparent md:p-0 md:text-white md:shadow-none ${
+        className={`fixed inset-y-0 left-0 z-61 flex h-dvh w-80 max-w-[85%] flex-col overflow-y-auto bg-[#161515] p-6 text-white shadow-2xl transition-transform duration-300 ease-out motion-reduce:transition-none md:static md:z-auto md:h-auto md:w-64 md:shrink-0 md:translate-x-0 md:overflow-visible md:bg-transparent md:p-0 md:text-white md:shadow-none ${
           mobileFilterOpen
             ? "translate-x-0"
             : "-translate-x-full pointer-events-none md:pointer-events-auto"
@@ -96,7 +225,6 @@ const FilterSidebar = ({ mobileFilterOpen, setMobileFilterOpen }: Props) => {
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-lg font-bold">Filters</h2>
 
-          {/* Close button (only on mobile) */}
           <button
             type="button"
             aria-label="Close filters"
@@ -113,27 +241,68 @@ const FilterSidebar = ({ mobileFilterOpen, setMobileFilterOpen }: Props) => {
           <h3 className="mb-4 border-b border-gray-200 pb-2 text-xs font-bold uppercase tracking-wider md:border-neutral-800">
             Category
           </h3>
+
           {categories.map((item) => (
-            <div key={item} className="flex justify-start items-center gap-2">
-              <input type="checkbox" className="cursor-pointer"/>
+            <div key={item} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="category"
+                value={item}
+                checked={filters.category === item}
+                onChange={handleFilterChange}
+                className="cursor-pointer"
+              />
               <span>{item}</span>
             </div>
+          ))}
+        </div>
 
+        {/* Gender */}
+        <div className="mb-6">
+          <h3 className="mb-4 border-b border-gray-200 pb-2 text-xs font-bold uppercase tracking-wider md:border-neutral-800">
+            Gender
+          </h3>
+
+          {genders.map((item) => (
+            <div key={item} className="flex gap-2">
+              <input
+                type="checkbox"
+                name="gender"
+                value={item}
+                checked={filters.gender === item}
+                onChange={handleFilterChange}
+                className="cursor-pointer"
+              />
+              <span>{item}</span>
+            </div>
           ))}
         </div>
 
         {/* Size */}
         <div className="mb-6">
           <h3 className="mb-4 border-b border-gray-200 pb-2 text-xs font-bold uppercase tracking-wider md:border-neutral-800">
-            Category
+            Size
           </h3>
-          {sizes.map((item) => (
-            <div key={item} className="flex justify-start items-center gap-2">
-              <input type="checkbox" className="cursor-pointer"/>
-              <span>{item}</span>
-            </div>
 
-          ))}
+          <div className="flex flex-wrap gap-2">
+            {sizes.map((size) => (
+              <button
+                key={size}
+                type="button"
+                name="size"
+                value={size}
+                onClick={handleFilterChange}
+                aria-pressed={filters.size.includes(size)}
+                className={`h-8 w-8 cursor-pointer rounded border text-xs font-bold transition-colors ${
+                  filters.size.includes(size)
+                    ? "border-orange-400 bg-orange-400 text-black"
+                    : "border-gray-300/20"
+                }`}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Color */}
@@ -142,22 +311,90 @@ const FilterSidebar = ({ mobileFilterOpen, setMobileFilterOpen }: Props) => {
             Color
           </h3>
 
-          <div className="flex flex-wrap gap-2">{/* colors options */}</div>
+          <div className="flex flex-wrap gap-2">
+            {colors.map((color) => (
+              <button
+                key={color}
+                type="button"
+                name="color"
+                value={color}
+                onClick={handleFilterChange}
+                aria-label={color}
+                aria-pressed={filters.color === color}
+                className={`h-8 w-8 cursor-pointer rounded-full transition-transform ${
+                  filters.color === color
+                    ? "ring-2 ring-orange-400 ring-offset-2 ring-offset-[#161515]"
+                    : "border-gray-300"
+                }`}
+                style={{ backgroundColor: color.toLowerCase() }}
+              />
+            ))}
+          </div>
         </div>
 
-        {/* Price */}
-        <div>
+        {/* Brand */}
+        <div className="mb-6">
           <h3 className="mb-4 border-b border-gray-200 pb-2 text-xs font-bold uppercase tracking-wider md:border-neutral-800">
-            Price
+            Brand
+          </h3>
+
+          {brands.map((item) => (
+            <div key={item} className="flex gap-2">
+              <input
+                type="checkbox"
+                name="brand"
+                value={item}
+                checked={filters.brand.includes(item)}
+                onChange={handleFilterChange}
+                className="cursor-pointer"
+              />
+              <span>{item}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Material */}
+        <div className="mb-6">
+          <h3 className="mb-4 border-b border-gray-200 pb-2 text-xs font-bold uppercase tracking-wider md:border-neutral-800">
+            Material
+          </h3>
+
+          {materials.map((item) => (
+            <div key={item} className="flex gap-2">
+              <input
+                type="checkbox"
+                name="material"
+                value={item}
+                checked={filters.material.includes(item)}
+                onChange={handleFilterChange}
+                className="cursor-pointer"
+              />
+              <span>{item}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Price Range */}
+        <div className="mb-6">
+          <h3 className="mb-4 border-b pb-2 text-xs font-bold uppercase">
+            Price Range
           </h3>
 
           <input
             type="range"
-            min="0"
-            max="50000"
-            aria-label="Maximum product price"
-            className="w-full accent-orange-500"
+            name="maxPrice"
+            min={0}
+            max={100}
+            step={1}
+            value={filters.maxPrice}
+            onChange={handleFilterChange}
+            className="w-full accent-orange-400"
           />
+
+          <div className="mt-2 flex items-center justify-between text-sm text-slate-500">
+            <span>$0</span>
+            <span>${filters.maxPrice}</span>
+          </div>
         </div>
       </aside>
     </>
