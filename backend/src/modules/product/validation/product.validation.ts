@@ -179,6 +179,50 @@ export const PRODUCT_UPDATE_VALIDATION = z.object({
       },
     ),
 });
+
+//quary validation
+export const PRODUCT_QUERY_VALIDATION = z.object({
+  query: z
+    .object({
+      collection: PRODUCT_VALIDATION.COLLECTIONS.optional(),
+
+      category: PRODUCT_VALIDATION.CATEGORY.optional(),
+
+      gender: PRODUCT_VALIDATION.GENDER.optional(),
+
+      color: z.string().trim().optional(),
+
+      size: z.string().trim().optional(),
+
+      material: PRODUCT_VALIDATION.MATERIAL,
+
+      brand: PRODUCT_VALIDATION.BRAND,
+
+      minPrice: z.coerce.number().finite().min(0).optional(),
+
+      maxPrice: z.coerce.number().finite().min(0).optional(),
+
+      sortBy: z.enum(["low-high", "high-low", "newest", "popular"]).optional(),
+
+      search: z.string().trim().max(100).optional(),
+
+      limit: z.coerce.number().int().min(1).max(100).optional(),
+
+      page: z.coerce.number().int().min(1).optional(),
+    })
+    .strict()
+    .refine(
+      (data) =>
+        data.minPrice === undefined ||
+        data.maxPrice === undefined ||
+        data.minPrice <= data.maxPrice,
+      {
+        message: "Minimum price cannot exceed maximum price",
+        path: ["minPrice"],
+      },
+    ),
+});
+
 // Inferred types
 export type ProductCreateInput = z.infer<
   typeof PRODUCT_CREATE_VALIDATION.shape.body
@@ -186,4 +230,8 @@ export type ProductCreateInput = z.infer<
 
 export type ProductUpdateInput = z.infer<
   typeof PRODUCT_UPDATE_VALIDATION.shape.body
+>;
+
+export type ProductQuaryInput = z.infer<
+  typeof PRODUCT_QUERY_VALIDATION.shape.query
 >;

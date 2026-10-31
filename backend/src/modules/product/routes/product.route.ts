@@ -8,13 +8,17 @@ import {
   singleProduct,
   updateProduct,
 } from "@modules/product/controller/product.controller.js";
-import { PRODUCT_CREATE_VALIDATION, PRODUCT_UPDATE_VALIDATION } from "../validation/product.validation.js";
+import {
+  PRODUCT_CREATE_VALIDATION,
+  PRODUCT_QUERY_VALIDATION,
+  PRODUCT_UPDATE_VALIDATION,
+} from "../validation/product.validation.js";
 
 export const productRoute = Router();
 
 //@route POST /api/v1/product/add
 //@desc Add a new product
-//@access Privae (Admin)
+//@access Private (Admin)
 productRoute.post(
   "/add",
   protect,
@@ -24,11 +28,24 @@ productRoute.post(
 );
 //@route PUT /api/v1/product/update
 //@desc Update a product
-//@access Privae (Admin)
-productRoute.put("/update/:id", protect, admin, validate(PRODUCT_UPDATE_VALIDATION),updateProduct);
+//@access Private (Admin)
+productRoute.put(
+  "/update/:id",
+  protect,
+  admin,
+  validate(PRODUCT_UPDATE_VALIDATION),
+  updateProduct,
+);
 //@route DELETE /api/v1/product/delete
 //@desc Delete a product
-//@access Privae (Admin)
+//@access Private (Admin)
 productRoute.delete("/delete/:id", protect, admin, deleteProduct);
-productRoute.get("/list", listProduct);
-productRoute.get("/single-product/:id", singleProduct);
+//@route GET /api/v1/product/:id
+//@desc Find a single product with id
+//@access Public
+productRoute.get("/:id", singleProduct);
+//@route GET /api/v1/product
+//@desc Get all products with optional quary and filters
+//@access Public
+productRoute.get("/", validate(PRODUCT_QUERY_VALIDATION),listProduct);
+

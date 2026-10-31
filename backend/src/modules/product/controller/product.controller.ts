@@ -6,6 +6,7 @@ import { ApiResponse } from "@utils/apiResponse.js";
 
 import { ProductService } from "@modules/product/service/product.service.js";
 import { HTTP_STATUS } from "@shared/httpcode.js";
+import type { ProductQuaryInput } from "../validation/product.validation.js";
 
 const productService = new ProductService();
 
@@ -111,7 +112,7 @@ export const deleteProduct = asyncHandler(
 
 //todo: list product
 export const listProduct = asyncHandler(async (req: Request, res: Response) => {
-  const list = await productService.listProduct();
+  const list = await productService.listProduct(req.query);
 
   return new ApiResponse(
     HTTP_STATUS.CREATED,

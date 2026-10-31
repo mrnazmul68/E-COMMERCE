@@ -5,6 +5,7 @@ import { ApiError } from "@utils/apiError.js";
 import { HTTP_STATUS } from "@shared/httpcode.js";
 import type {
   ProductCreateInput,
+  ProductQuaryInput,
   ProductUpdateInput,
 } from "../validation/product.validation.js";
 
@@ -82,9 +83,38 @@ export class ProductService {
     return await this.productRepository.removeProduct(productId);
   }
 
-  // list product
-  async listProduct() {
-    return await this.productRepository.listProduct();
+  // list product and quary
+  async listProduct(quaryData: ProductQuaryInput) {
+    const {
+      collection,
+      category,
+      material,
+      gender,
+      color,
+      size,
+      brand,
+      minPrice,
+      maxPrice,
+      sortBy,
+      search,
+      limit = 10,
+      page = 1,
+    } = quaryData;
+
+    let quary: Record<string, any> = {};
+
+    //filter quary
+    if (collection && collection.toLocaleLowerCase() !== "all") {
+      quary.collection = collection;
+    }
+
+    if (category && category.toLocaleLowerCase() !== "all") {
+      quary.category = category;
+    }
+
+    if (material) {
+      quary.material = { $in: material.split(".,") };
+    }
   }
 
   // single product
