@@ -1,7 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { FaEnvelope, FaLock, FaUser } from "react-icons/fa";
+import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-
+import { loginUser } from "../redux/slices/authSlice";
+import type { AppDispatch } from "../redux/store";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -9,12 +11,25 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const dispatch = useDispatch<AppDispatch>();
 
-  const handleSignup = async (event:FormEvent<HTMLFormElement>) => {
+  const handleSignup = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setEmail("")
-    setPassword("")
-    
+
+    try {
+      setLoading(true);
+
+      await dispatch(loginUser({ email, password })).unwrap();
+
+      setEmail("");
+      setPassword("");
+
+      navigate("/");
+    } catch (error) {
+      console.error("Login failed:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

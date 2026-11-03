@@ -12,6 +12,7 @@ import ProductDetails from "./components/products/ProductDetails";
 const App = () => {
   return (
     <>
+    
       <Toaster position="top-right" duration={1000} />
       <Routes>
         <Route path="/" element={<UserLayout />}>

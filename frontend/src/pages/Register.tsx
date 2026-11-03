@@ -1,7 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { FaEnvelope, FaLock, FaUser } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-
+import type { AppDispatch } from "../redux/store";
+import { registerUser } from "../redux/slices/authSlice";
+import { useDispatch } from "react-redux";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -9,14 +11,25 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
 
-
-  const handleSignup = async (event:FormEvent<HTMLFormElement>) => {
+  const handleSignup = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setName("")
-    setEmail("")
-    setPassword("")
-    
+
+    try {
+      setLoading(true);
+
+      await dispatch(registerUser({ name, email, password })).unwrap();
+      setName("");
+      setEmail("");
+      setPassword("");
+
+      navigate("/");
+    } catch (error) {
+      console.error("Registration failed:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
