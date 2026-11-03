@@ -2,10 +2,11 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 import { api } from "../api";
 
-interface User {
-  id?: string;
+export interface User {
+  id: string;
   name: string;
   email: string;
+  role: "customer" | "admin";
 }
 
 interface AuthState {
@@ -27,16 +28,19 @@ interface RegisterCredentials {
 }
 
 interface UserApiResponse {
-  user: User;
-  token: string;
+  success: boolean;
+  statusCode: number;
+  data: {
+    user: User;
+    accessToken: string;
+  };
+  message: string;
 }
 
 // Local storage
 const userInfo = localStorage.getItem("userInfo");
 
-const userFromStorage: User | null = userInfo
-  ? (JSON.parse(userInfo) as User)
-  : null;
+const userFromStorage: User | null = userInfo ? JSON.parse(userInfo) : null;
 
 const initialGuestId: string =
   localStorage.getItem("guestId") || `guest_${Date.now()}`;
@@ -59,11 +63,11 @@ export const loginUser = createAsyncThunk<
 >("auth/login", async (userData, { rejectWithValue }) => {
   try {
     const response = await api.post<UserApiResponse>("/auth/login", userData);
-    console.log(response.data.user)
-    localStorage.setItem("userInfo", JSON.stringify(response.data.user));
-    localStorage.setItem("userToken", response.data.token);
+    // Log the entire response data
+    localStorage.setItem("userInfo", JSON.stringify(response.data.data.user));
+    localStorage.setItem("accessToken", response.data.data.accessToken);
 
-    return response.data.user;
+    return response.data.data.user;
   } catch (error: unknown) {
     if (axios.isAxiosError<{ message?: string }>(error)) {
       return rejectWithValue(error.response?.data?.message || "Login failed");
@@ -85,10 +89,10 @@ export const registerUser = createAsyncThunk<
       userData,
     );
 
-    localStorage.setItem("userInfo", JSON.stringify(response.data.user));
-    localStorage.setItem("userToken", response.data.token);
+    localStorage.setItem("userInfo", JSON.stringify(response.data.data.user));
+    localStorage.setItem("accessToken", response.data.data.accessToken);
 
-    return response.data.user;
+    return response.data.data.user;
   } catch (error: unknown) {
     if (axios.isAxiosError<{ message?: string }>(error)) {
       return rejectWithValue(
@@ -112,7 +116,7 @@ const authSlice = createSlice({
       state.error = null;
 
       localStorage.removeItem("userInfo");
-      localStorage.removeItem("userToken");
+      localStorage.removeItem("accessToken");
 
       // guestId remains unchanged
     },

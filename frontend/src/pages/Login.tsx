@@ -1,5 +1,5 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { FaEnvelope, FaLock, FaUser } from "react-icons/fa";
+import { useState, type FormEvent } from "react";
+import { FaEnvelope, FaLock} from "react-icons/fa";
 import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../redux/slices/authSlice";
@@ -19,7 +19,8 @@ const Login = () => {
     try {
       setLoading(true);
 
-      await dispatch(loginUser({ email, password })).unwrap();
+     const result = await dispatch(loginUser({ email, password })).unwrap();
+     console.log("Login successful:", result);
 
       setEmail("");
       setPassword("");
@@ -33,7 +34,9 @@ const Login = () => {
   };
 
   return (
+    
     <section className="w-full pt-16 py-20 min-h-screen bg-[#fdfcfb] flex items-center justify-center px-4">
+      
       <form
         onSubmit={handleSignup}
         className="w-full max-w-md bg-white shadow-lg rounded-xl p-8"

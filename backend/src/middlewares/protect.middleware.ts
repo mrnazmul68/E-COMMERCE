@@ -1,11 +1,9 @@
-import type { NextFunction, Request, RequestHandler, Response } from "express";
 import type { JwtPayload } from "jsonwebtoken";
 import { HTTP_STATUS } from "@shared/httpcode.js";
 import { ApiError } from "@utils/apiError.js";
 import { asyncHandler } from "@utils/asyncHandler.js";
 import { verifyAccessToken } from "@utils/jwt.js";
 import { UserRepository } from "@modules/auth/user/userAuth.repository.js";
-import { decode } from "node:punycode";
 
 const userRepository = new UserRepository();
 

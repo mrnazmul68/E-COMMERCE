@@ -1,5 +1,4 @@
 import { UserRepository } from "@modules/auth/user/userAuth.repository.js";
-import type { SessionType } from "@modules/auth/models/session.model.js";
 import { HTTP_STATUS } from "@shared/httpcode.js";
 import { ApiError } from "@utils/apiError.js";
 import {
@@ -114,7 +113,6 @@ export class UserService {
     }
 
     const refreshToken = generateRefreshToken(user._id.toString(), user.role);
-    const refreshTokenHash = await bcrypt.hash(refreshToken, 10);
 
     const accessToken = generateAccessToken(user._id.toString(), user.role);
 

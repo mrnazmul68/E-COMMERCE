@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { FaEnvelope, FaLock, FaUser } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import type { AppDispatch } from "../redux/store";
