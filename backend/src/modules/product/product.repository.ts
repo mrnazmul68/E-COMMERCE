@@ -1,5 +1,5 @@
-import { Product } from "@modules/product/model/product.model.js";
-import type { SimilarProductQuery } from "../service/product.service.js";
+import { Product } from "@modules/product/product.model.js";
+import type { SimilarProductQuery } from "./product.service.js";
 
 export class ProductRepository {
   constructor(private readonly model = Product) {}
@@ -35,16 +35,35 @@ export class ProductRepository {
   }
 
   //Find similar product
-  async findSimilarProducts(product:SimilarProductQuery){
-    return this.model.find({
-      _id:{$ne: product.id},
-      category: product.category,
-      gender:product.gender
-    }).limit(4)
+  async findSimilarProducts(product: SimilarProductQuery) {
+    return this.model
+      .find({
+        _id: { $ne: product.id },
+        category: product.category,
+        gender: product.gender,
+      })
+      .limit(4);
   }
 
   //Best seller products
-  async bestSellerProducts() {
-    return this.model.find().sort({ rating: -1 }).limit(10).lean();
+  async bestSellerProducts(rating: number = 5) {
+    return this.model
+      .find({
+        rating,
+        isPublished: true,
+      })
+      .sort({ numReviews: -1 })
+      .lean();
+  }
+
+  //New arrival products
+  async newArrivalProducts() {
+    return this.model
+      .find({
+        isPublished: true,
+      })
+      .sort({ createdAt: -1 })
+      .limit(8)
+      .lean();
   }
 }

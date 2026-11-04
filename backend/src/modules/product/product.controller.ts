@@ -4,9 +4,9 @@ import { asyncHandler } from "@utils/asyncHandler.js";
 import { ApiError } from "@utils/apiError.js";
 import { ApiResponse } from "@utils/apiResponse.js";
 
-import { ProductService } from "@modules/product/service/product.service.js";
 import { HTTP_STATUS } from "@shared/httpcode.js";
-import type { ProductQuaryInput } from "../validation/product.validation.js";
+import type { ProductQuaryInput } from "./product.validation.js";
+import { ProductService } from "./product.service.js";
 
 const productService = new ProductService();
 
@@ -172,6 +172,19 @@ export const bestSellerProducts = asyncHandler(
       HTTP_STATUS.OK,
       bestSellerProducts,
       "Best-selling products fetched successfully",
+    ).send(res);
+  },
+);
+
+//New arraival products
+export const newArrivalProducts = asyncHandler(
+  async (req: Request, res: Response) => {
+    const newArrivalProducts = await productService.newArrivalProducts();
+
+    return new ApiResponse(
+      HTTP_STATUS.OK,
+      newArrivalProducts,
+      "New arrival products fetched successfully",
     ).send(res);
   },
 );

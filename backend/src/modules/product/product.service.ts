@@ -1,6 +1,6 @@
 import type { Types } from "mongoose";
 
-import { ProductRepository } from "@modules/product/repository/product.repository.js";
+import { ProductRepository } from "@modules/product/product.repository.js";
 import { ApiError } from "@utils/apiError.js";
 import { HTTP_STATUS } from "@shared/httpcode.js";
 
@@ -8,8 +8,8 @@ import type {
   ProductCreateInput,
   ProductQuaryInput,
   ProductUpdateInput,
-} from "../validation/product.validation.js";
-import type { ProductGender } from "../model/product.model.js";
+} from "./product.validation.js";
+import type { ProductGender } from "./product.model.js";
 
 type SortOption =
   | "newest"
@@ -262,16 +262,32 @@ export class ProductService {
   }
 
   //find similar product
-  async findSimilarProducts(product:SimilarProductQuery){
-    return await this.productRepository.findSimilarProducts(product)
-
+  async findSimilarProducts(product: SimilarProductQuery) {
+    return await this.productRepository.findSimilarProducts(product);
   }
   //Best seller products
   async bestSellerProducts() {
-    const bestSellerProducts = await this.productRepository.bestSellerProducts();
-    if(!bestSellerProducts || bestSellerProducts.length === 0){
-      throw new ApiError(HTTP_STATUS.NOT_FOUND, "No best-selling products found");
+    const bestSellerProducts =
+      await this.productRepository.bestSellerProducts();
+    if (!bestSellerProducts || bestSellerProducts.length === 0) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        "No best-selling products found",
+      );
     }
     return bestSellerProducts;
+  }
+
+  //New arrival products
+  async newArrivalProducts() {
+    const newArrivalProducts =
+      await this.productRepository.newArrivalProducts();
+    if (!newArrivalProducts || newArrivalProducts.length === 0) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        "No new arrival products found",
+      );
+    }
+    return newArrivalProducts;
   }
 }

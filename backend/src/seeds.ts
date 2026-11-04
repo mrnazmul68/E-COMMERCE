@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { connectDb, disconnectDb } from "./config/connectDB.js";
-import { Product } from "./modules/product/model/product.model.js";
+import { Product } from "./modules/product/product.model.js";
 import { User } from "./modules/auth/models/auth.model.js";
 import { logger } from "./utils/logger.js";
 import { env } from "./config/env.js";
