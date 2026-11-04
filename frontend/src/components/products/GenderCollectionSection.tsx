@@ -19,7 +19,7 @@ const collections = [
 
 const GenderCollectionSection = () => {
   return (
-    <section className="bg-[#080808] text-white">
+    <section className="bg-[#080808]">
       <div className="mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-12">
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
           Shop by <span className="text-orange-500">Category</span>

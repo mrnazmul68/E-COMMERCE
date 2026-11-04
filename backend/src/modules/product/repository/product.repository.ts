@@ -1,25 +1,50 @@
 import { Product } from "@modules/product/model/product.model.js";
+import type { SimilarProductQuery } from "../service/product.service.js";
 
 export class ProductRepository {
   constructor(private readonly model = Product) {}
 
-  //todo: create product
-  async create(productData: any): Promise<any> {
-    return await this.model.create(productData);
+  // Create product
+  async create(productData: any) {
+    return this.model.create(productData);
   }
 
-  //todo: remove product
+  // Remove product
   async removeProduct(productId: string) {
-    return await this.model.deleteOne({ _id: productId });
+    return this.model.deleteOne({ _id: productId });
   }
 
-  //todo: list product
-  async listProduct() {
-    return await this.model.find({});
+  // Find products with filters, sorting and pagination
+  async findProducts(
+    query: Record<string, any>,
+    sort: Record<string, 1 | -1>,
+    skip: number,
+    limit: number,
+  ) {
+    return this.model.find(query).sort(sort).skip(skip).limit(limit).lean();
   }
 
-  //todo: find by product id
+  // Count filtered products
+  async countProducts(query: Record<string, any>) {
+    return this.model.countDocuments(query);
+  }
+
+  // Find single product
   async findById(productId: string) {
-    return await this.model.findById({ _id: productId });
+    return this.model.findById(productId);
+  }
+
+  //Find similar product
+  async findSimilarProducts(product:SimilarProductQuery){
+    return this.model.find({
+      _id:{$ne: product.id},
+      category: product.category,
+      gender:product.gender
+    }).limit(4)
+  }
+
+  //Best seller products
+  async bestSellerProducts() {
+    return this.model.find().sort({ rating: -1 }).limit(10).lean();
   }
 }

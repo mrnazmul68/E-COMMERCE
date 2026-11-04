@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 const Hero = () => {
   return (
-    <section className="bg-[#080808] text-white">
+    <section className="bg-[#080808]">
       <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 py-16 sm:px-8 md:grid-cols-2 md:py-24 lg:px-12">
         {/* Left content */}
         <div>

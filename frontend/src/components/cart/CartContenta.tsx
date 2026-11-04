@@ -135,6 +135,7 @@ const CartContenta = ({
             <p className="mt-2 text-xs text-gray-500">
               Shipping and taxes are calculated at checkout.
             </p>
+            {/* checkout page link */}
             <Link
               to="/checkout"
               onClick={onClose}
@@ -142,6 +143,7 @@ const CartContenta = ({
             >
               Checkout <ArrowRight size={16} />
             </Link>
+
             <button
               type="button"
               onClick={onClose}

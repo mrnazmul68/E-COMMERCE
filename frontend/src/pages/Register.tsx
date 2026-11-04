@@ -33,7 +33,7 @@ const Register = () => {
   };
 
   return (
-    <section className="w-full pt-16 py-20 min-h-screen bg-[#fdfcfb] flex items-center justify-center px-4">
+    <section className="w-full pt-16 py-20 min-h-screen text-black bg-[#fdfcfb] flex items-center justify-center px-4">
       <form
         onSubmit={handleSignup}
         className="w-full max-w-md bg-white shadow-lg rounded-xl p-8"

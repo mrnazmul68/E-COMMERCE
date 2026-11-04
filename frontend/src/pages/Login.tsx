@@ -35,7 +35,7 @@ const Login = () => {
 
   return (
     
-    <section className="w-full pt-16 py-20 min-h-screen bg-[#fdfcfb] flex items-center justify-center px-4">
+    <section className="w-full pt-16 py-20 min-h-screen bg-[#fdfcfb] text-black flex items-center justify-center px-4">
       
       <form
         onSubmit={handleSignup}

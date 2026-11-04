@@ -110,14 +110,16 @@ export const deleteProduct = asyncHandler(
   },
 );
 
-//todo: list product
+//todo: list product and filter
 export const listProduct = asyncHandler(async (req: Request, res: Response) => {
-  const list = await productService.listProduct(req.query);
+  const queryData = req.query as unknown as ProductQuaryInput;
+
+  const result = await productService.listProduct(queryData);
 
   return new ApiResponse(
-    HTTP_STATUS.CREATED,
-    list,
-    "Product fetch successfully",
+    HTTP_STATUS.OK,
+    result,
+    "Products fetched successfully",
   ).send(res);
 });
 
@@ -133,6 +135,43 @@ export const singleProduct = asyncHandler(
       HTTP_STATUS.CREATED,
       singleProduct,
       "Product fetched successfully",
+    ).send(res);
+  },
+);
+
+// todo: get similar products with gender, category
+export const getSimilarProducts = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    if (!id || typeof id !== "string") {
+      throw new ApiError(HTTP_STATUS.NOT_FOUND, "Product id not found");
+    }
+
+    const currentProduct = await productService.singleProduct(id);
+
+    const result = await productService.findSimilarProducts({
+      id: currentProduct._id,
+      category: currentProduct.category,
+      gender: currentProduct.gender,
+    });
+
+    return new ApiResponse(
+      HTTP_STATUS.OK,
+      result,
+      "Similar products fetched successfully",
+    ).send(res);
+  },
+);
+
+// todo: get best-selling products with rating
+export const bestSellerProducts = asyncHandler(
+  async (req: Request, res: Response) => {
+    const bestSellerProducts = await productService.bestSellerProducts();
+
+    return new ApiResponse(
+      HTTP_STATUS.OK,
+      bestSellerProducts,
+      "Best-selling products fetched successfully",
     ).send(res);
   },
 );
