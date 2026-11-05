@@ -12,6 +12,7 @@ const links = [
   { label: "Women", to: "/women" },
   { label: "Topwear", to: "/topwear" },
   { label: "Shop", to: "/shop" },
+  { label: "Admin", to: "/admin" },
 ];
 
 type NavbarProps = {

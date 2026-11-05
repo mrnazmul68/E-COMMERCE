@@ -1,4 +1,8 @@
-import mongoose, { Schema, type InferSchemaType } from "mongoose";
+import mongoose, {
+  Schema,
+  type HydratedDocument,
+  type InferSchemaType,
+} from "mongoose";
 
 // Cart item schema
 const cartItemSchema = new Schema(
@@ -58,4 +62,5 @@ const cartSchema = new Schema(
 );
 
 export type CartDocument = InferSchemaType<typeof cartSchema>;
+export type CartHydratedDocument = HydratedDocument<CartDocument>;
 export const Cart = mongoose.model("Cart", cartSchema);

@@ -3,6 +3,7 @@ import { ApiResponse } from "@utils/apiResponse.js";
 import { asyncHandler } from "@utils/asyncHandler.js";
 import type { Request, Response } from "express";
 import { CartService } from "./cart.service.js";
+import { ApiError } from "@utils/apiError.js";
 
 const cartService = new CartService();
 
@@ -59,7 +60,11 @@ export const getCartItems = asyncHandler(
 // Merge cart items for a user and guest
 export const mergeCartItems = asyncHandler(
   async (req: Request, res: Response) => {
-    const { userId, guestId } = req.body;
+    const { guestId } = req.body;
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new ApiError(HTTP_STATUS.NOT_FOUND, "User id not found");
+    }
 
     const response = await cartService.mergeCartItems(userId, guestId);
     return new ApiResponse(HTTP_STATUS.OK, response, "Cart items merged").send(

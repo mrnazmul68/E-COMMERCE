@@ -3,6 +3,7 @@ import { CartRepository } from "./cart.repository.js";
 import { HTTP_STATUS } from "@shared/httpcode.js";
 import { ProductRepository } from "@modules/product/product.repository.js";
 import type { CartItemInput } from "./cart.validation.js";
+import { Types } from "mongoose";
 
 export class CartService {
   constructor(
@@ -160,57 +161,82 @@ export class CartService {
     return cart;
   }
 
-  //Merge cart items for a user and guest
-  // async mergeCartItems(userId: string, guestId: string) {
-  //   const userCart = await this.cartRepository.findCartByUserId(userId);
-  //   const guestCart = await this.cartRepository.findCartByGuestId(guestId);
+  // Merge cart items for a user and guest
+  async mergeCartItems(userId: string, guestId: string) {
+    const guestCart = await this.cartRepository.findCartByGuestId(guestId);
+    const userCart = await this.cartRepository.findCartByUserId(userId);
 
-  //   if (!guestCart) {
-  //     throw new ApiError(HTTP_STATUS.NOT_FOUND, "Guest cart not found");
-  //   }
+    // CHANGED: Guest cart না থাকলে existing user cart return করব
+    if (!guestCart) {
+      if (userCart) return userCart;
 
-  //   if (userCart) {
-  //     // Merge guest cart items into user cart
-  //     for (const guestItem of guestCart.products) {
-  //       const existingItemIndex = userCart.products.findIndex(
-  //         (item) =>
-  //           item.productId.toString() === guestItem.productId.toString() &&
-  //           item.color === guestItem.color &&
-  //           item.size === guestItem.size,
-  //       );
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        "No cart found for the specified user or guest",
+      );
+    }
 
-  //       if (existingItemIndex > -1) {
-  //         // If the item already exists in the user cart, update the quantity
-  //         userCart.products[existingItemIndex]!.quantity += guestItem.quantity;
-  //       } else {
-  //         // If the item doesn't exist in the user cart, add it
-  //         userCart.products.push(guestItem);
-  //       }
-  //     }
+    // CHANGED: Empty guest cart হলে existing user cart return করব
+    if (guestCart.products.length === 0) {
+      if (userCart) return userCart;
 
-  //     // Recalculate the total price for the user cart
-  //     userCart.totalPrice = userCart.products.reduce(
-  //       (acc, item) => acc + item.price * item.quantity,
-  //       0,
-  //     );
+      throw new ApiError(HTTP_STATUS.NOT_FOUND, "Guest cart is empty");
+    }
 
-  //     await userCart.save();
-  //   } else {
-  //     // If the user cart doesn't exist, create a new one with guest cart items
-  //     const newUserCart = await this.cartRepository.createCart({
-  //       userId,
-  //       products: guestCart.products,
-  //       totalPrice: guestCart.totalPrice,
-  //     });
+    // If user cart doesn't exist, assign guest cart to the user
+    if (!userCart) {
+      guestCart.userId = new Types.ObjectId(userId);
+      guestCart.guestId = undefined;
 
-  //     await newUserCart.save();
-  //   }
+      // CHANGED: Recalculate total price before saving
+      guestCart.totalPrice = guestCart.products.reduce(
+        (acc, item) => acc + item.price * item.quantity,
+        0,
+      );
 
-  //   // Delete the guest cart after merging
-  //   await this.cartRepository.deleteCartByGuestId(guestId);
+      await guestCart.save();
 
-  //   return { message: "Carts merged successfully" };
-  // }
+      // CHANGED: Return the updated cart
+      return guestCart;
+    }
+
+    // Merge guest cart items into user cart
+    guestCart.products.forEach((guestItem) => {
+      const productIndex = userCart.products.findIndex(
+        (item) =>
+          item.productId.toString() === guestItem.productId.toString() &&
+          item.size === guestItem.size &&
+          item.color === guestItem.color,
+      );
+
+      if (productIndex > -1) {
+        // If item exists, update its quantity
+        userCart.products[productIndex]!.quantity += guestItem.quantity;
+      } else {
+        // CHANGED: Create a new subdocument instead of reusing
+        // the guest cart's Mongoose subdocument and its _id
+        userCart.products.push({
+          productId: guestItem.productId,
+          size: guestItem.size,
+          color: guestItem.color,
+          price: guestItem.price,
+          quantity: guestItem.quantity,
+        });
+      }
+    });
+
+    // Recalculate total price
+    userCart.totalPrice = userCart.products.reduce(
+      (acc, item) => acc + item.price * item.quantity,
+      0,
+    );
+
+    await userCart.save();
+
+    // Delete guest cart after successful merge
+    await this.cartRepository.deleteCartByGuestId(guestId);
+
+    // CHANGED: Return the updated user cart consistently
+    return userCart;
+  }
 }
-
-I was here

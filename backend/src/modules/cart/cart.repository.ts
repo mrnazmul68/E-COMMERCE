@@ -1,4 +1,8 @@
-import { Cart } from "./cart.model.js";
+import {
+  Cart,
+  type CartDocument,
+  type CartHydratedDocument,
+} from "./cart.model.js";
 import type { CartCreateInput } from "./cart.validation.js";
 
 export class CartRepository {
@@ -15,7 +19,14 @@ export class CartRepository {
   }
 
   // Find a cart by guest ID
-  async findCartByGuestId(guestId: string) {
+  async findCartByGuestId(
+    guestId: string,
+  ): Promise<CartHydratedDocument | null> {
     return this.cartModel.findOne({ guestId });
+  }
+
+  //Delete cart by guest ID
+  async deleteCartByGuestId(guestId: string) {
+    return this.cartModel.findOneAndDelete({ guestId });
   }
 }
