@@ -11,6 +11,10 @@ import ProductDetails from "./components/products/ProductDetails";
 import Checkout from "./components/cart/Checkout.";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import AdminLayout from "./components/admin/AdminLayout";
+import AdminHomepage from "./pages/AdminHomepage";
+import UsersManagement from "./components/admin/UsersManagement";
+import ProductManagement from "./components/admin/ProductManagement";
+import EditProduct from "./components/admin/EditProduct";
 
 const App = () => {
   return (
@@ -29,7 +33,14 @@ const App = () => {
           <Route path="checkout" element={<Checkout />} />
           <Route path="order-confirmation" element={<OrderConfirmation />} />
         </Route>
-        <Route path="/admin" element={<AdminLayout />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          {/* Admin pages will be added to these routes later. */}
+          <Route index element={<AdminHomepage />} />
+          <Route path="users" element={<UsersManagement />} />
+          <Route path="products" element={<ProductManagement/>} />
+          <Route path="products/:id/edit" element={<EditProduct />} />
+          <Route path="shop" />
+        </Route>
       </Routes>
     </>
   );
