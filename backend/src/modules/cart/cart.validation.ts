@@ -16,6 +16,37 @@ export const cartItemValidation = z.object({
   }),
 });
 
+export const cartItemUpdateValidation = z.object({
+  body: z.object({
+    productId: objectIdSchema,
+    userId: objectIdSchema.optional(),
+    guestId: z.string().optional(),
+    size: z.string().min(1),
+    color: z.string().min(1),
+    quantity: z.number().int().optional(),
+  }),
+});
+
+// Cart Item Delete Validation
+export const cartItemDeleteValidation = z.object({
+  body: z.object({
+    productId: objectIdSchema,
+    userId: objectIdSchema.optional(),
+    guestId: z.string().optional(),
+    size: z.string().min(1),
+    color: z.string().min(1),
+  }),
+});
+
+// Cart items get Validation
+export const cartItemGetValidation = z.object({
+  query: z.object({
+    userId: objectIdSchema.optional(),
+    guestId: z.string().optional(),
+  }),
+});
+
+//
 export const cartValidation = z.object({
   body: z.object({
     userId: objectIdSchema.optional(),
