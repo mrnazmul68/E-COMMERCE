@@ -1,11 +1,12 @@
-import { Product } from "@modules/product/product.model.js";
+import { Product, type ProductDocument } from "@modules/product/product.model.js";
 import type { SimilarProductQuery } from "./product.service.js";
+import type { ProductCreateInput } from "./product.validation.js";
 
 export class ProductRepository {
   constructor(private readonly model = Product) {}
 
   // Create product
-  async create(productData: any) {
+  async create(productData: ProductCreateInput) {
     return this.model.create(productData);
   }
 
@@ -30,7 +31,7 @@ export class ProductRepository {
   }
 
   // Find single product
-  async findById(productId: string) {
+  async findById(productId: string): Promise<ProductDocument | null> {
     return this.model.findById(productId);
   }
 

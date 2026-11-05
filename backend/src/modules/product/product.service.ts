@@ -91,7 +91,7 @@ export class ProductService {
     product.dimensions = dimensions ?? product.dimensions;
     product.weight = weight ?? product.weight;
 
-    return product.save();
+    return await product.save();
   }
 
   // Delete product

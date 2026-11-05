@@ -1,9 +1,8 @@
 import { ApiError } from "@utils/apiError.js";
 import { CartRepository } from "./cart.repository.js";
-import type { CartCreateInput } from "./cart.validation.js";
 import { HTTP_STATUS } from "@shared/httpcode.js";
 import { ProductRepository } from "@modules/product/product.repository.js";
-import type { CartDocument } from "./cart.model.js";
+import type { CartItemInput } from "./cart.validation.js";
 
 export class CartService {
   constructor(
@@ -22,11 +21,11 @@ export class CartService {
   }
 
   // Add an item to the cart
-  async addToCart(cartItem: CartCreateInput) {
-    const { productId, userId, guestId, color, size } = cartItem;
-    const existingCart = await this.productRepository.findById(productId);
+  async addToCart(cartItem: CartItemInput) {
+    const { productId, userId, guestId, color, size, quantity } = cartItem;
+    const product = await this.productRepository.findById(productId);
 
-    if (!existingCart) {
+    if (!product) {
       throw new ApiError(HTTP_STATUS.NOT_FOUND, "Product not found");
     }
 
@@ -40,8 +39,48 @@ export class CartService {
           p.size === size,
       );
 
-      if (productIndex) {
+      if (productIndex !== -1) {
+        cart.products[productIndex]!.quantity += quantity;
+      } else {
+        cart.products.push({
+          productId,
+          name: product.name,
+          price: product.price,
+          image: product.images[0]?.url,
+          size,
+          color,
+          quantity,
+        });
       }
+
+      //Recalculate the total price
+      cart.totalPrice = cart.products.reduce(
+        (acc, item) => acc + item.price * item.quantity,
+        0,
+      );
+      return await cart.save();
+    } else {
+      //create a new cart
+      const products = [
+        {
+          productId,
+          name: product.name,
+          price: product.price,
+          image: product.images[0]!.url,
+          size,
+          color,
+          quantity,
+        },
+      ];
+      const totalPrice = product.price * quantity;
+      const newCart = await this.cartRepository.createCart({
+        userId,
+        guestId: guestId ? guestId : "guest_" + Date.now().toString(),
+        products,
+        totalPrice,
+      });
+
+      return newCart;
     }
   }
 }

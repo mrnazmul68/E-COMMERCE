@@ -57,5 +57,5 @@ const cartSchema = new Schema(
   { timestamps: true, versionKey: false },
 );
 
-export type CartDocument = InferSchemaType<typeof cartSchema>
+export type CartDocument = InferSchemaType<typeof cartSchema>;
 export const Cart = mongoose.model("Cart", cartSchema);

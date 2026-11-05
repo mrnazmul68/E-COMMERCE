@@ -1,4 +1,4 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, type HydratedDocument, type InferSchemaType } from "mongoose";
 
 export type ProductGender = "Men" | "Women" | "Unisex";
 
@@ -201,4 +201,8 @@ const productSchema = new Schema(
   },
 );
 
+
+export type Product = InferSchemaType<typeof productSchema>;
+
+export type ProductDocument = HydratedDocument<Product>;
 export const Product = mongoose.model("Product", productSchema);

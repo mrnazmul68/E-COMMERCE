@@ -7,11 +7,10 @@ import { CartService } from "./cart.service.js";
 
 const cartService = new CartService();
 
-export const addToCart = asyncHandler(
-  async (req: Request, res: Response) => {
-    const cartItem = req.body;
+export const addToCart = asyncHandler(async (req: Request, res: Response) => {
+  const cartItem = req.body;
 
-    const respone = await cartService.addToCart(cartItem);
+  const respone = await cartService.addToCart(cartItem);
 
-  },
-);
+  return new ApiResponse(HTTP_STATUS.OK, respone, "Added to cart").send(res);
+});
