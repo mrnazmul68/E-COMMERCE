@@ -19,11 +19,10 @@ type AdminSidebarProps = {
 };
 
 const navItems = [
-      { label: "Dashboard", to: "/admin", icon: Home },
-      { label: "Users", to: "/admin/users", icon: Users },
-      { label: "Products", to: "/admin/products", icon: Store },
-      { label: "Orders", to: "/admin/orders", icon: ShoppingBag },
-      { label: "Shop", to: "/admin/shop", icon: Store },
+  { label: "Dashboard", to: "/admin", icon: Home },
+  { label: "Users", to: "/admin/users", icon: Users },
+  { label: "Products", to: "/admin/products", icon: Store },
+  { label: "Orders", to: "/admin/orders", icon: ShoppingBag },
 ] as const;
 
 const AdminSidebar = ({ isOpen, onOpen, onClose }: AdminSidebarProps) => {

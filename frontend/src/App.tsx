@@ -15,6 +15,7 @@ import AdminHomepage from "./pages/AdminHomepage";
 import UsersManagement from "./components/admin/UsersManagement";
 import ProductManagement from "./components/admin/ProductManagement";
 import EditProduct from "./components/admin/EditProduct";
+import OrderManagement from "./components/admin/OrderManagement";
 
 const App = () => {
   return (
@@ -39,7 +40,7 @@ const App = () => {
           <Route path="users" element={<UsersManagement />} />
           <Route path="products" element={<ProductManagement/>} />
           <Route path="products/:id/edit" element={<EditProduct />} />
-          <Route path="shop" />
+          <Route path="orders" element={<OrderManagement />} />
         </Route>
       </Routes>
     </>
