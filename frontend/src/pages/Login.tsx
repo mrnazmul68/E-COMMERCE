@@ -1,42 +1,42 @@
 import { useState, type FormEvent } from "react";
-import { FaEnvelope, FaLock} from "react-icons/fa";
-import { useDispatch } from "react-redux";
+import { FaEnvelope, FaLock } from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../redux/slices/authSlice";
-import type { AppDispatch } from "../redux/store";
+import type { AppDispatch, RootState } from "../redux/store";
+import { toast } from "sonner";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const dispatch = useDispatch<AppDispatch>();
+
+  const { loading, error } = useSelector((state: RootState) => state.auth);
 
   const handleSignup = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     try {
-      setLoading(true);
-
-     const result = await dispatch(loginUser({ email, password })).unwrap();
-     console.log("Login successful:", result);
+      const user = await dispatch(loginUser({ email, password })).unwrap();
+      toast.success(`Welcome back ${user.role} Login successful`);
 
       setEmail("");
       setPassword("");
 
       navigate("/");
     } catch (error) {
-      console.error("Login failed:", error);
-    } finally {
-      setLoading(false);
+      toast.error(
+        typeof error === "string"
+          ? error
+          : "Registration failed. Please try again.",
+      );
     }
   };
 
   return (
-    
     <section className="w-full pt-16 py-20 min-h-screen bg-[#fdfcfb] text-black flex items-center justify-center px-4">
-      
       <form
         onSubmit={handleSignup}
         className="w-full max-w-md bg-white shadow-lg rounded-xl p-8"
@@ -73,10 +73,17 @@ const Login = () => {
           />
         </div>
 
+        {/* API Error */}
+        {error && (
+          <p role="alert" className="text-sm text-red-600 mb-4 text-center">
+            {error}
+          </p>
+        )}
+
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-black text-white py-3 rounded hover:bg-gray-800 transition disabled:opacity-50"
+          className="w-full bg-black cursor-pointer text-white py-3 rounded hover:bg-gray-800 transition disabled:opacity-50"
         >
           {loading ? "Creating Account..." : "Sign Up"}
         </button>

@@ -1,34 +1,40 @@
 import { useState, type FormEvent } from "react";
 import { FaEnvelope, FaLock, FaUser } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-import type { AppDispatch } from "../redux/store";
+import type { AppDispatch, RootState } from "../redux/store";
 import { registerUser } from "../redux/slices/authSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "sonner";
 
 const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
+
+  //Redux state
   const dispatch = useDispatch<AppDispatch>();
+  const { loading, error } = useSelector((state: RootState) => state.auth);
 
   const handleSignup = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     try {
-      setLoading(true);
-
-      await dispatch(registerUser({ name, email, password })).unwrap();
+      const user = await dispatch(
+        registerUser({ name, email, password }),
+      ).unwrap();
+      toast.success(`Welcome, ${user.name}! Account created successfully.`);
       setName("");
       setEmail("");
       setPassword("");
-
       navigate("/");
     } catch (error) {
-      console.error("Registration failed:", error);
-    } finally {
-      setLoading(false);
+      toast.error(
+        typeof error === "string"
+          ? error
+          : "Registration failed. Please try again.",
+      );
     }
   };
 
@@ -82,6 +88,13 @@ const Register = () => {
             className="w-full pl-10 pr-3 py-3 border rounded focus:outline-none focus:border-black"
           />
         </div>
+
+        {/* API Error */}
+        {error && (
+          <p role="alert" className="text-sm text-red-600 mb-4 text-center">
+            {error}
+          </p>
+        )}
 
         <button
           type="submit"

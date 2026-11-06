@@ -6,6 +6,8 @@ import CartDrawer, {
   type CartDrawerProps,
   type CartItem,
 } from "../layout/CartDrawer";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "../../redux/store";
 
 const links = [
   { label: "Men", to: "/collections/all" },
@@ -117,12 +119,13 @@ const Navbar = ({ cartCount = 0, cart }: NavbarProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [login, setLogin] = useState(false);
   const location = useLocation();
   const items = products ?? [];
   const displayedCartCount =
     cart?.items.reduce((count, item) => count + item.quantity, 0) ?? cartCount;
   const closeCart = useCallback(() => setCartOpen(false), []);
+  const dispatch = useDispatch<AppDispatch>()
+  const {loading, user} = useSelector((state:RootState)=>state.auth)
 
   // Navbar style change on scroll
   useEffect(() => {
@@ -220,7 +223,7 @@ const Navbar = ({ cartCount = 0, cart }: NavbarProps) => {
                 </button>
 
                 <Link
-                  to={login ? "/profile" : "/login"}
+                  to={user ? "/profile" : "/login"}
                   aria-label="Profile"
                   className={`${iconBtn} hidden sm:inline-flex`}
                 >

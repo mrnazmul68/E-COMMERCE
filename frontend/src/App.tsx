@@ -20,7 +20,7 @@ import OrderManagement from "./components/admin/OrderManagement";
 const App = () => {
   return (
     <>
-      <Toaster position="top-right" duration={1000} />
+      <Toaster position="top-right" duration={2000} />
       <Routes>
         <Route path="/" element={<UserLayout />}>
           {/*User layout */}
