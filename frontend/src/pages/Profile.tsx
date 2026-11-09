@@ -18,14 +18,22 @@ import {
   getOrderTotal,
   type AccountProfile,
 } from "../data/account";
+import { useSelector } from "react-redux";
+import type { RootState } from "../redux/store";
 
 const Profile = () => {
   const [profile, setProfile] = useState<AccountProfile>(demoProfile);
   const [isEditing, setIsEditing] = useState(false);
 
-  const updateField = (field: "firstName" | "lastName" | "email" | "phone", value: string) => {
+  const updateField = (
+    field: "firstName" | "lastName" | "email" | "phone",
+    value: string,
+  ) => {
     setProfile((current) => ({ ...current, [field]: value }));
   };
+
+  //User data
+  const { user } = useSelector((state: RootState) => state.auth);
 
   const handleSave = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -43,30 +51,25 @@ const Profile = () => {
       <div className="mx-auto max-w-7xl">
         <div className="mb-9">
           <div className="mb-3 flex items-center gap-2 text-xs text-neutral-500">
-            <Link to="/" className="transition hover:text-white">Home</Link>
+            <Link to="/" className="transition hover:text-white">
+              Home
+            </Link>
             <ChevronRight size={13} />
-            <span className="text-neutral-300">My account</span>
+            <span className="text-neutral-300">Profile</span>
           </div>
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange-400">
-            Your space
-          </p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-            Account <span className="text-orange-500">overview</span>
-          </h1>
-          <p className="mt-2 text-sm text-neutral-400">
-            Manage your details, addresses, and recent orders.
-          </p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
           <aside className="h-fit rounded-2xl border border-white/10 bg-[#101010] p-5">
             <div className="flex items-center gap-3 border-b border-white/10 pb-5">
               <div className="flex size-12 items-center justify-center rounded-full bg-orange-500/15 text-lg font-bold text-orange-400">
-                {profile.firstName.charAt(0)}{profile.lastName.charAt(0)}
+                {user?.name.charAt(0)}
               </div>
               <div className="min-w-0">
-                <p className="truncate font-semibold">{profile.firstName} {profile.lastName}</p>
-                <p className="truncate text-xs text-neutral-500">{profile.email}</p>
+                <p className="truncate font-semibold">{user?.name}</p>
+                <p className="truncate text-xs text-neutral-500">
+                  {user?.email}
+                </p>
               </div>
             </div>
             <nav aria-label="Account navigation" className="mt-4 space-y-1">
@@ -78,22 +81,22 @@ const Profile = () => {
               </a>
               <Link
                 to="/orders"
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-neutral-400 transition hover:bg-white/[0.05] hover:text-white"
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-neutral-400 transition hover:bg-white/5 hover:text-white"
               >
                 <Package size={17} /> My orders
                 <ArrowRight size={15} className="ml-auto" />
               </Link>
               <a
                 href="#saved-address"
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-neutral-400 transition hover:bg-white/[0.05] hover:text-white"
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-neutral-400 transition hover:bg-white/5 hover:text-white"
               >
                 <MapPin size={17} /> Saved address
               </a>
             </nav>
-            <div className="mt-5 rounded-xl border border-white/[0.06] bg-black/40 p-3.5">
+            <div className="mt-5 rounded-xl border border-white/6 bg-black/40 p-3.5">
               <div className="flex items-center gap-2 text-xs font-medium text-neutral-300">
                 <ShieldCheck size={15} className="text-orange-400" />
-                Member since {profile.memberSince}
+                Member since <br /> {user?.createdAt}
               </div>
             </div>
           </aside>
@@ -101,16 +104,29 @@ const Profile = () => {
           <div className="space-y-6">
             <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {[
-                { label: "Total orders", value: demoOrders.length, icon: Package },
+                {
+                  label: "Total orders",
+                  value: demoOrders.length,
+                  icon: Package,
+                },
                 { label: "In progress", value: activeOrders, icon: ArrowRight },
-                { label: "Lifetime spend", value: formatTaka(17440), icon: ShieldCheck },
+                {
+                  label: "Lifetime spend",
+                  value: formatTaka(17440),
+                  icon: ShieldCheck,
+                },
               ].map(({ label, value, icon: Icon }) => (
-                <div key={label} className="rounded-2xl border border-white/10 bg-[#101010] p-4 sm:p-5">
-                  <div className="mb-4 flex size-9 items-center justify-center rounded-xl bg-white/[0.06] text-orange-400">
+                <div
+                  key={label}
+                  className="rounded-2xl border border-white/10 bg-[#101010] p-4 sm:p-5"
+                >
+                  <div className="mb-4 flex size-9 items-center justify-center rounded-xl bg-white/6 text-orange-400">
                     <Icon size={17} />
                   </div>
                   <p className="text-xs text-neutral-500">{label}</p>
-                  <p className="mt-1 text-lg font-semibold sm:text-xl">{value}</p>
+                  <p className="mt-1 text-lg font-semibold sm:text-xl">
+                    {value}
+                  </p>
                 </div>
               ))}
             </section>
@@ -121,7 +137,9 @@ const Profile = () => {
             >
               <div className="mb-6 flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-lg font-semibold">Personal information</h2>
+                  <h2 className="text-lg font-semibold">
+                    Personal information
+                  </h2>
                   <p className="mt-1 text-sm text-neutral-500">
                     Keep your contact details up to date.
                   </p>
@@ -139,23 +157,28 @@ const Profile = () => {
 
               <form onSubmit={handleSave}>
                 <div className="grid gap-5 sm:grid-cols-2">
-                  {([
-                    ["firstName", "First name"],
-                    ["lastName", "Last name"],
-                    ["email", "Email address"],
-                    ["phone", "Phone number"],
-                  ] as const).map(([field, label]) => (
+                  {(
+                    [
+                      ["firstName", "First name"],
+                      ["email", "Email address"],
+                      ["phone", "Phone number"],
+                    ] as const
+                  ).map(([field, label]) => (
                     <label key={field} className="block">
-                      <span className="mb-2 block text-xs font-medium text-neutral-400">{label}</span>
+                      <span className="mb-2 block text-xs font-medium text-neutral-400">
+                        {label}
+                      </span>
                       <input
                         type={field === "email" ? "email" : "text"}
                         value={profile[field]}
                         readOnly={!isEditing}
-                        onChange={(event) => updateField(field, event.target.value)}
+                        onChange={(event) =>
+                          updateField(field, event.target.value)
+                        }
                         className={`h-11 w-full rounded-xl border bg-black/50 px-3.5 text-sm text-white outline-none transition ${
                           isEditing
                             ? "border-white/15 focus:border-orange-500/70"
-                            : "border-white/[0.06] text-neutral-300"
+                            : "border-white/6 text-neutral-300"
                         }`}
                       />
                     </label>
@@ -175,7 +198,7 @@ const Profile = () => {
                         setProfile(demoProfile);
                         setIsEditing(false);
                       }}
-                      className="rounded-xl border border-white/10 px-4 py-2.5 text-sm text-neutral-300 transition hover:bg-white/[0.05]"
+                      className="rounded-xl border border-white/10 px-4 py-2.5 text-sm text-neutral-300 transition hover:bg-white/5"
                     >
                       Cancel
                     </button>
@@ -194,19 +217,24 @@ const Profile = () => {
               <div className="mb-5 flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-semibold">Saved address</h2>
-                  <p className="mt-1 text-sm text-neutral-500">Your default delivery location.</p>
+                  <p className="mt-1 text-sm text-neutral-500">
+                    Your default delivery location.
+                  </p>
                 </div>
                 <MapPin size={19} className="text-orange-400" />
               </div>
               <div className="rounded-xl border border-white/[0.07] bg-black/40 p-4">
                 <div className="mb-2 flex items-center gap-2">
-                  <span className="text-sm font-medium">{profile.address.label}</span>
+                  <span className="text-sm font-medium">
+                    {profile.address.label}
+                  </span>
                   <span className="rounded-full bg-orange-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-400">
                     Default
                   </span>
                 </div>
                 <p className="text-sm leading-6 text-neutral-400">
-                  {profile.address.street}<br />
+                  {profile.address.street}
+                  <br />
                   {profile.address.city}, {profile.address.postalCode}
                 </p>
               </div>
@@ -216,7 +244,9 @@ const Profile = () => {
               <div className="mb-5 flex items-center justify-between gap-4">
                 <div>
                   <h2 className="text-lg font-semibold">Recent orders</h2>
-                  <p className="mt-1 text-sm text-neutral-500">A quick look at your latest purchases.</p>
+                  <p className="mt-1 text-sm text-neutral-500">
+                    A quick look at your latest purchases.
+                  </p>
                 </div>
                 <Link
                   to="/orders"
@@ -227,7 +257,10 @@ const Profile = () => {
               </div>
               <div className="divide-y divide-white/[0.07]">
                 {recentOrders.map((order) => (
-                  <div key={order.id} className="flex items-center justify-between gap-3 py-4 first:pt-0 last:pb-0">
+                  <div
+                    key={order.id}
+                    className="flex items-center justify-between gap-3 py-4 first:pt-0 last:pb-0"
+                  >
                     <div className="flex min-w-0 items-center gap-3">
                       <img
                         src={order.items[0].image}
@@ -235,13 +268,21 @@ const Profile = () => {
                         className="size-12 shrink-0 rounded-lg bg-neutral-800 object-cover"
                       />
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{order.id}</p>
-                        <p className="mt-1 text-xs text-neutral-500">{order.placedAt}</p>
+                        <p className="truncate text-sm font-medium">
+                          {order.id}
+                        </p>
+                        <p className="mt-1 text-xs text-neutral-500">
+                          {order.placedAt}
+                        </p>
                       </div>
                     </div>
                     <div className="shrink-0 text-right">
-                      <p className="text-sm font-semibold">{formatTaka(getOrderTotal(order))}</p>
-                      <p className="mt-1 text-xs text-orange-400">{order.status}</p>
+                      <p className="text-sm font-semibold">
+                        {formatTaka(getOrderTotal(order))}
+                      </p>
+                      <p className="mt-1 text-xs text-orange-400">
+                        {order.status}
+                      </p>
                     </div>
                   </div>
                 ))}

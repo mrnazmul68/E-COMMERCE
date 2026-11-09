@@ -54,6 +54,7 @@ export const validate =
         const errors = error.issues.map((issue) => ({
           field: issue.path.length ? issue.path.join(".") : "unknown",
           message: issue.message,
+          code: issue.code,
         }));
 
         new ApiResponse(

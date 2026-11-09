@@ -1,17 +1,26 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import {
+  createAsyncThunk,
+  createSlice,
+  type PayloadAction,
+} from "@reduxjs/toolkit";
 import axios from "axios";
-import { api } from "../axios";
+import { api, broadcastLogout, broadcastSession } from "../../lib/axios";
+import { setAccessToken } from "../../lib/token";
 
 export interface User {
   id: string;
   name: string;
   email: string;
   role: "customer" | "admin";
+  createdAt: string;
 }
+
+export type AuthStatus = "idle" | "loading" | "authenticated" | "guest";
 
 interface AuthState {
   user: User | null;
   guestId: string;
+  status: AuthStatus;
   loading: boolean;
   error: string | null;
 }
@@ -20,6 +29,10 @@ interface LoginCredentials {
   email: string;
   password: string;
 }
+interface VerifyLoginCredentials {
+  email: string;
+  otp: string;
+}
 
 interface RegisterCredentials {
   name: string;
@@ -27,7 +40,7 @@ interface RegisterCredentials {
   password: string;
 }
 
-interface UserApiResponse {
+export interface UserApiResponse {
   success: boolean;
   statusCode: number;
   data: {
@@ -37,37 +50,60 @@ interface UserApiResponse {
   message: string;
 }
 
-// Local storage
-const userInfo = localStorage.getItem("userInfo");
-
-const userFromStorage: User | null = userInfo ? JSON.parse(userInfo) : null;
+// Remove credentials left behind by the previous localStorage-based auth.
+localStorage.removeItem("accessToken");
+localStorage.removeItem("userInfo");
 
 const initialGuestId: string =
   localStorage.getItem("guestId") || `guest_${Date.now()}`;
 
 localStorage.setItem("guestId", initialGuestId);
 
-// Initial state
 const initialState: AuthState = {
-  user: userFromStorage,
+  user: null,
   guestId: initialGuestId,
+  status: "idle",
   loading: false,
   error: null,
 };
 
 // Login thunk
 export const loginUser = createAsyncThunk<
-  User,
+  string,
   LoginCredentials,
   { rejectValue: string }
 >("auth/login", async (userData, { rejectWithValue }) => {
   try {
     const response = await api.post<UserApiResponse>("/auth/login", userData);
-    // Log the entire response data
-    localStorage.setItem("userInfo", JSON.stringify(response.data.data.user));
-    localStorage.setItem("accessToken", response.data.data.accessToken);
+    const { message } = response.data;
 
-    return response.data.data.user;
+    return message;
+  } catch (error: unknown) {
+    if (axios.isAxiosError<{ message?: string }>(error)) {
+      return rejectWithValue(error.response?.data?.message || "Login failed");
+    }
+
+    return rejectWithValue("Something went wrong");
+  }
+});
+
+// Verify LoginUser thunk
+export const verifyLoginUser = createAsyncThunk<
+  User,
+  VerifyLoginCredentials,
+  { rejectValue: string }
+>("auth/login/verify-user", async (userData, { rejectWithValue }) => {
+  try {
+    const response = await api.post<UserApiResponse>(
+      "/auth/login/verify-user",
+      userData,
+    );
+    const { user, accessToken } = response.data.data;
+
+    setAccessToken(accessToken);
+    broadcastSession({ accessToken, user });
+
+    return user;
   } catch (error: unknown) {
     if (axios.isAxiosError<{ message?: string }>(error)) {
       return rejectWithValue(error.response?.data?.message || "Login failed");
@@ -88,11 +124,12 @@ export const registerUser = createAsyncThunk<
       "/auth/register",
       userData,
     );
+    const { user, accessToken } = response.data.data;
 
-    localStorage.setItem("userInfo", JSON.stringify(response.data.data.user));
-    localStorage.setItem("accessToken", response.data.data.accessToken);
+    setAccessToken(accessToken);
+    broadcastSession({ accessToken, user });
 
-    return response.data.data.user;
+    return user;
   } catch (error: unknown) {
     if (axios.isAxiosError<{ message?: string }>(error)) {
       return rejectWithValue(
@@ -104,21 +141,61 @@ export const registerUser = createAsyncThunk<
   }
 });
 
+// Logout thunk
+export const logoutUser = createAsyncThunk<void, void, { rejectValue: string }>(
+  "auth/logout",
+  async (_, { rejectWithValue }) => {
+    try {
+      await api.post("/auth/logout");
+    } catch (error: unknown) {
+      if (axios.isAxiosError<{ message?: string }>(error)) {
+        /*
+         * 401 means the session is already gone. Treat it as a successful
+         * local logout instead of trapping the user in a broken state.
+         */
+        if (error.response?.status === 401) {
+          setAccessToken(null);
+          broadcastLogout();
+          return;
+        }
+
+        return rejectWithValue(
+          error.response?.data?.message || "Logout failed",
+        );
+      }
+
+      return rejectWithValue("Logout failed");
+    }
+
+    setAccessToken(null);
+    broadcastLogout();
+  },
+);
+
 // Auth slice
 const authSlice = createSlice({
   name: "auth",
   initialState,
 
   reducers: {
-    logout: (state) => {
-      state.user = null;
+    setCredentials: (state, action: PayloadAction<User>) => {
+      state.user = action.payload;
+      state.status = "authenticated";
       state.loading = false;
       state.error = null;
+    },
 
-      localStorage.removeItem("userInfo");
-      localStorage.removeItem("accessToken");
+    setGuest: (state) => {
+      state.user = null;
+      state.status = "guest";
+      state.loading = false;
+    },
 
-      // guestId remains unchanged
+    clearAuth: (state) => {
+      state.user = null;
+      state.status = "guest";
+      state.loading = false;
+      state.error = null;
     },
 
     clearAuthError: (state) => {
@@ -127,20 +204,37 @@ const authSlice = createSlice({
   },
 
   extraReducers: (builder) => {
+    //Login user
     // Login
     builder
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(loginUser.fulfilled, (state, action) => {
+      .addCase(loginUser.fulfilled, (state) => {
         state.loading = false;
-        state.user = action.payload;
         state.error = null;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload ?? "Login failed";
+      });
+    // Verify user login
+    builder
+      .addCase(verifyLoginUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyLoginUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+        state.status = "authenticated";
+        state.error = null;
+      })
+      .addCase(verifyLoginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Login failed";
+        state.status = state.user ? "authenticated" : "guest";
       });
 
     // Register
@@ -152,15 +246,35 @@ const authSlice = createSlice({
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload;
+        state.status = "authenticated";
         state.error = null;
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload ?? "Registration failed";
+        state.status = state.user ? "authenticated" : "guest";
+      });
+
+    // Logout
+    builder
+      .addCase(logoutUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.user = null;
+        state.status = "guest";
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(logoutUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Logout failed";
       });
   },
 });
 
-export const { logout, clearAuthError } = authSlice.actions;
+export const { setCredentials, setGuest, clearAuth, clearAuthError } =
+  authSlice.actions;
 
 export default authSlice.reducer;

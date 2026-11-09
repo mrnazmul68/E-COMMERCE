@@ -8,6 +8,7 @@ import { closeServer, listenServer } from "@utils/httpServer.js";
 import { beginShutdown, isShuttingDown } from "@shared/lifeCycle.js";
 import type { AddressInfo } from "node:net";
 import { connectCloudinary } from "@config/connectCloudinary.js";
+import { SessionModel } from "@modules/auth/models/session.model.js";
 
 const CONNECTION_CHECKING_INTERVAL = 5_000;
 const KEEP_ALIVE_TIMEOUT = 65_000;
@@ -193,7 +194,16 @@ const attachProcessHandlers = (): void => {
 //todo: start server
 const startServer = async (): Promise<void> => {
   await connectDb();
-  await connectCloudinary()
+
+  /*
+   * autoIndex is disabled in production. Refresh sessions need their TTL
+   * index so expired/revoked rows are cleaned up automatically.
+   */
+  if (env.isProduction) {
+    await SessionModel.createIndexes();
+  }
+
+  await connectCloudinary();
   if (isShuttingDown()) return;
   const httpServer = createServer(
     {

@@ -9,6 +9,31 @@ export const envSchema = z.object({
 
   NODE_ENV: z.enum(["development", "production"]).default("development"),
 
+  CORS_ORIGINS: z
+    .string()
+    .trim()
+    .default("http://localhost:5173,http://127.0.0.1:5173")
+    .transform((value) =>
+      value
+        .split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean),
+    ),
+
+  COOKIE_SAME_SITE: z.enum(["lax", "strict", "none"]).default("lax"),
+
+  COOKIE_DOMAIN: z.string().trim().optional(),
+
+  JWT_ACCESS_TTL: z
+    .string()
+    .trim()
+    .regex(/^\d+[smhd]$/, "Use a duration such as 15m, 1h, or 7d")
+    .default("15m"),
+
+  REFRESH_TOKEN_TTL_DAYS: integerFromEnv(30, { min: 1, max: 90 }),
+
+  TRUST_PROXY_HOPS: integerFromEnv(0, { min: 0, max: 10 }),
+
   LOG_LEVEL: z
     .enum(["fatal", "error", "warn", "info", "debug", "trace"])
     .optional(),
@@ -73,4 +98,5 @@ export const envSchema = z.object({
     .trim()
     .min(1, "Cloudinary API secret is required")
     .max(500, "Cloudinary API secret cannot exceed 500 characters"),
+    
 });

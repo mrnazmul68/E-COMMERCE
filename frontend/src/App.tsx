@@ -16,31 +16,51 @@ import UsersManagement from "./components/admin/UsersManagement";
 import ProductManagement from "./components/admin/ProductManagement";
 import EditProduct from "./components/admin/EditProduct";
 import OrderManagement from "./components/admin/OrderManagement";
+import AuthBootstrap from "./auth/AuthBootstrap";
+import { ProtectedRoute } from "./auth/ProtectedRoute";
+import { PublicOnlyRoute } from "./auth/PublicOnlyRoute";
 
 const App = () => {
   return (
     <>
       <Toaster position="top-right" duration={2000} />
+
       <Routes>
-        <Route path="/" element={<UserLayout />}>
-          {/*User layout */}
-          <Route index element={<Home />} />
-          <Route path="login" element={<Login />} />
-          <Route path="register" element={<Register />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="orders" element={<MyOrders />} />
-          <Route path="collections/:collection" element={<Collection />} />
-          <Route path="product/:id" element={<ProductDetails />} />
-          <Route path="checkout" element={<Checkout />} />
-          <Route path="order-confirmation" element={<OrderConfirmation />} />
-        </Route>
-        <Route path="/admin" element={<AdminLayout />}>
-          {/* Admin pages will be added to these routes later. */}
-          <Route index element={<AdminHomepage />} />
-          <Route path="users" element={<UsersManagement />} />
-          <Route path="products" element={<ProductManagement/>} />
-          <Route path="products/:id/edit" element={<EditProduct />} />
-          <Route path="orders" element={<OrderManagement />} />
+        <Route element={<AuthBootstrap />}>
+          <Route path="/" element={<UserLayout />}>
+            {/* Public storefront */}
+            <Route index element={<Home />} />
+            <Route path="collections/:collection" element={<Collection />} />
+            <Route path="product/:id" element={<ProductDetails />} />
+
+            {/* Guests only */}
+            <Route element={<PublicOnlyRoute />}>
+              <Route path="login" element={<Login />} />
+              <Route path="register" element={<Register />} />
+            </Route>
+
+            {/* Signed-in customers */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="profile" element={<Profile />} />
+              <Route path="orders" element={<MyOrders />} />
+              <Route path="checkout" element={<Checkout />} />
+              <Route
+                path="order-confirmation"
+                element={<OrderConfirmation />}
+              />
+            </Route>
+          </Route>
+
+          {/* Admin */}
+          <Route path="/admin" element={<ProtectedRoute adminOnly />}>
+            <Route element={<AdminLayout />}>
+              <Route index element={<AdminHomepage />} />
+              <Route path="users" element={<UsersManagement />} />
+              <Route path="products" element={<ProductManagement />} />
+              <Route path="products/:id/edit" element={<EditProduct />} />
+              <Route path="orders" element={<OrderManagement />} />
+            </Route>
+          </Route>
         </Route>
       </Routes>
     </>

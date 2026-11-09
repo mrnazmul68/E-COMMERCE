@@ -1,13 +1,22 @@
 import { useCallback, useEffect, useState } from "react";
-import { UserRound, ShoppingCart, Menu, X, ArrowRight } from "lucide-react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import {
+  UserRound,
+  ShoppingCart,
+  Menu,
+  X,
+  ArrowRight,
+  LogOut,
+} from "lucide-react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import SearchBar, { SearchBarPanel, SearchBarToggle } from "./SearchBar";
 import CartDrawer, {
   type CartDrawerProps,
   type CartItem,
 } from "../layout/CartDrawer";
 import { useDispatch, useSelector } from "react-redux";
+import { toast } from "sonner";
 import type { AppDispatch, RootState } from "../../redux/store";
+import { logoutUser } from "../../redux/slices/authSlice";
 
 const links = [
   { label: "Men", to: "/collections/all" },
@@ -124,8 +133,32 @@ const Navbar = ({ cartCount = 0, cart }: NavbarProps) => {
   const displayedCartCount =
     cart?.items.reduce((count, item) => count + item.quantity, 0) ?? cartCount;
   const closeCart = useCallback(() => setCartOpen(false), []);
-  const dispatch = useDispatch<AppDispatch>()
-  const {loading, user} = useSelector((state:RootState)=>state.auth)
+
+  const { user } = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+
+  const visibleLinks = links.filter(
+    (link) => link.label !== "Admin" || user?.role === "admin",
+  );
+
+  //Logout handler
+  const handleLogout = async () => {
+    const result = await dispatch(logoutUser());
+    toast.success("Logout successfull");
+
+    if (logoutUser.rejected.match(result)) {
+      toast.error(
+        typeof result.payload === "string"
+          ? result.payload
+          : "Logout failed. Please try again.",
+      );
+      return;
+    }
+
+    setMenuOpen(false);
+    navigate("/login", { replace: true });
+  };
 
   // Navbar style change on scroll
   useEffect(() => {
@@ -195,7 +228,7 @@ const Navbar = ({ cartCount = 0, cart }: NavbarProps) => {
 
               {/* Desktop links */}
               <div className="hidden md:flex items-center gap-9">
-                {links.map((l) => (
+                {visibleLinks.map((l) => (
                   <NavLink key={l.label} to={l.to} className={desktopLink}>
                     {l.label}
                   </NavLink>
@@ -229,6 +262,17 @@ const Navbar = ({ cartCount = 0, cart }: NavbarProps) => {
                 >
                   <UserRound size={21} strokeWidth={1.8} />
                 </Link>
+
+                {user && (
+                  <button
+                    type="button"
+                    aria-label="Logout"
+                    onClick={handleLogout}
+                    className={`${iconBtn} hidden sm:inline-flex`}
+                  >
+                    <LogOut size={20} strokeWidth={1.8} />
+                  </button>
+                )}
 
                 <button
                   aria-label="Open menu"
@@ -273,7 +317,7 @@ const Navbar = ({ cartCount = 0, cart }: NavbarProps) => {
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 py-4">
-          {links.map((l, i) => (
+          {visibleLinks.map((l, i) => (
             <NavLink
               key={l.label}
               to={l.to}
@@ -300,18 +344,27 @@ const Navbar = ({ cartCount = 0, cart }: NavbarProps) => {
 
         <div className="p-4 border-t border-white/10 grid grid-cols-2 gap-3">
           <Link
-            to="/profile"
+            to={user ? "/profile" : "/login"}
             className="flex items-center justify-center gap-2 rounded-xl bg-white/10 py-3 text-sm font-medium text-white hover:bg-white/15 active:scale-95 transition"
           >
-            <UserRound size={18} /> Profile
+            <UserRound size={18} /> {user ? "Profile" : "Login"}
           </Link>
           <Link
             to="/cart"
-            className="flex items-centeclassNamer justify-center gap-2 rounded-xl bg-orange-500 py-3 text-sm font-semibold text-white hover:bg-orange-600 active:scale-95 transition"
+            className="flex items-center justify-center gap-2 rounded-xl bg-orange-500 py-3 text-sm font-semibold text-white hover:bg-orange-600 active:scale-95 transition"
           >
             <ShoppingCart size={18} /> Cart
             {displayedCartCount > 0 && ` (${displayedCartCount})`}
           </Link>
+          {user && (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="col-span-2 flex items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 py-3 text-sm font-medium text-red-400 hover:bg-red-500/20 active:scale-95 transition"
+            >
+              <LogOut size={18} /> Logout
+            </button>
+          )}
         </div>
       </aside>
 

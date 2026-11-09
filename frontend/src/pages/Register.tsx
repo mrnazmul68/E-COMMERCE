@@ -28,7 +28,7 @@ const Register = () => {
       setName("");
       setEmail("");
       setPassword("");
-      navigate("/");
+      navigate("/", { replace: true });
     } catch (error) {
       toast.error(
         typeof error === "string"

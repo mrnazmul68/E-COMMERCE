@@ -25,4 +25,11 @@ export class UserRepository {
   async findById(id: string, selectField = ""): Promise<UserDocument | null> {
     return await this.model.findOne({ _id: id }).select(selectField).exec();
   }
+
+  //invalidate every access token issued before this call
+  async incrementTokenVersion(id: string): Promise<void> {
+    await this.model
+      .updateOne({ _id: id }, { $inc: { tokenVersion: 1 } })
+      .exec();
+  }
 }

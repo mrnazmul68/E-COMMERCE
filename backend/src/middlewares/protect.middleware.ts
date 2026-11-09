@@ -1,33 +1,28 @@
-import type { JwtPayload } from "jsonwebtoken";
 import { HTTP_STATUS } from "@shared/httpcode.js";
 import { ApiError } from "@utils/apiError.js";
 import { asyncHandler } from "@utils/asyncHandler.js";
-import { verifyAccessToken } from "@utils/jwt.js";
+import { verifyAccessToken, type AccessTokenPayload } from "@utils/jwt.js";
 import { UserRepository } from "@modules/auth/user/userAuth.repository.js";
+import { redis } from "@config/redis.js";
+import { getUserWithCache } from "@modules/auth/user/user.cashe.service.js";
 
 const userRepository = new UserRepository();
 
-interface TokenPayload extends JwtPayload {
-  _id: string;
-  role: string;
-}
-
 //protect middleware
-export const protect = asyncHandler(async (req, res, next) => {
+export const protect = asyncHandler(async (req, _res, next) => {
   let token: string | undefined;
 
-  // 1. Get token from Authorization header (Bearer <token>)
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer ")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
-  }
-  // 2. Or fallback to cookies if present
-  else if (req.cookies?.accessToken) {
-    token = req.cookies.accessToken;
+  const authorization = req.headers.authorization;
+
+  if (authorization?.startsWith("Bearer ")) {
+    token = authorization.split(" ")[1];
   }
 
+  /*
+   * Access tokens are intentionally accepted only from the Authorization
+   * header. Accepting them from a cookie would make every protected endpoint
+   * CSRF-able.
+   */
   if (!token) {
     throw new ApiError(
       HTTP_STATUS.UNAUTHORIZED,
@@ -35,10 +30,10 @@ export const protect = asyncHandler(async (req, res, next) => {
     );
   }
 
-  // 3. Verify token
-  let decoded: TokenPayload;
+  let decoded: AccessTokenPayload;
+
   try {
-    decoded = verifyAccessToken(token) as TokenPayload;
+    decoded = verifyAccessToken(token);
   } catch {
     throw new ApiError(
       HTTP_STATUS.UNAUTHORIZED,
@@ -50,8 +45,7 @@ export const protect = asyncHandler(async (req, res, next) => {
     throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Malformed token payload");
   }
 
-  // 4. Check if user still exists in database
-  const user = await userRepository.findById(decoded._id);
+  const user = await getUserWithCache(decoded._id);
   if (!user) {
     throw new ApiError(
       HTTP_STATUS.UNAUTHORIZED,
@@ -59,16 +53,28 @@ export const protect = asyncHandler(async (req, res, next) => {
     );
   }
 
-  // 5. Attach user to request object
+  /*
+   * Incremented by logout-all/password-change flows. This makes existing
+   * access tokens invalid immediately instead of waiting for their TTL.
+   */
+  if ((decoded.tokenVersion ?? 0) !== (user.tokenVersion ?? 0)) {
+    throw new ApiError(
+      HTTP_STATUS.UNAUTHORIZED,
+      "Session is no longer valid. Please log in again",
+    );
+  }
+
   req.user = user;
   next();
 });
 
 //Middleware to check role as admin
-export const admin = asyncHandler(async (req, res, next) => {
+export const admin = asyncHandler(async (req, _res, next) => {
   const user = req.user;
+
   if (!user || user.role !== "admin") {
     throw new ApiError(HTTP_STATUS.FORBIDDEN, "Not authorize as Admin");
   }
+
   next();
 });

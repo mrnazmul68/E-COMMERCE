@@ -63,6 +63,12 @@ const userSchema = new mongoose.Schema(
 
       default: "customer",
     },
+
+    tokenVersion: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   {
     timestamps: true,
@@ -74,4 +80,5 @@ userSchema.index({ role: 1 });
 
 export type UserType = InferSchemaType<typeof userSchema>;
 export type UserDocument = HydratedDocumentFromSchema<typeof userSchema>;
+
 export const User = mongoose.model("User", userSchema);

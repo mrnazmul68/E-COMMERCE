@@ -13,6 +13,7 @@ import { HTTP_STATUS } from "@shared/httpcode.js";
 import type { FieldError } from "@shared/http/envelope.js";
 import { ApiResponse } from "@utils/apiResponse.js";
 import { ApiError } from "@utils/apiError.js";
+import { logger } from "@utils/logger.js";
 
 interface ErrorLike {
   name?: string;
@@ -231,18 +232,17 @@ export const errorMiddleware: ErrorRequestHandler = (
     return;
   }
 
-  /*
-   * Log the original error.
-   *
-   * Replace console.error with your project logger
-   * (Pino/Winston) later.
-   */
-  console.error({
-    error: err,
+  const logContext = {
     method: req.method,
     url: req.originalUrl,
     statusCode: normalized.statusCode,
-  });
+  };
+
+  if (normalized.statusCode >= HTTP_STATUS.INTERNAL_SERVER_ERROR) {
+    logger.error({ ...logContext, error: err }, "Request failed");
+  } else {
+    logger.warn(logContext, normalized.message);
+  }
 
   /*
    * Don't expose internal error details.

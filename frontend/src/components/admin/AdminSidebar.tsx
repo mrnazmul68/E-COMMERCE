@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { logout } from "../../redux/slices/authSlice";
+import { toast } from "sonner";
+import { logoutUser } from "../../redux/slices/authSlice";
 import type { AppDispatch } from "../../redux/store";
 
 type AdminSidebarProps = {
@@ -29,10 +30,20 @@ const AdminSidebar = ({ isOpen, onOpen, onClose }: AdminSidebarProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    dispatch(logout());
+  const handleLogout = async () => {
+    const result = await dispatch(logoutUser());
+
+    if (logoutUser.rejected.match(result)) {
+      toast.error(
+        typeof result.payload === "string"
+          ? result.payload
+          : "Logout failed. Please try again.",
+      );
+      return;
+    }
+
     onClose();
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
 
   // Desktop keeps the full sidebar open; mobile closes after navigation.

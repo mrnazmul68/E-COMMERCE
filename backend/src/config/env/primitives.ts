@@ -45,7 +45,7 @@ const reject = (
 
 const blankAsAbsent = <T extends z.ZodType>(schema: T) =>
   z
-    .preprocess((value) => blankToUndefined(value, "trim"), schema.optional())
+    .preprocess((value) => blankToUndefined(value, "trim"), schema)
     .transform((value, ctx) => {
       if (value === undefined) reject(ctx, "is required");
       return value;
