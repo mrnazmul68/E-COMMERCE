@@ -19,6 +19,7 @@ import OrderManagement from "./components/admin/OrderManagement";
 import AuthBootstrap from "./auth/AuthBootstrap";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { PublicOnlyRoute } from "./auth/PublicOnlyRoute";
+import VerifyEmailPage from "./components/common/EmailVerification";
 
 const App = () => {
   return (
@@ -37,6 +38,7 @@ const App = () => {
             <Route element={<PublicOnlyRoute />}>
               <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
+              <Route path="/token/:token" element={<VerifyEmailPage />} />
             </Route>
 
             {/* Signed-in customers */}

@@ -124,7 +124,7 @@ export class UserService {
     const hashedPassword = await bcrypt.hash(userData.password, 12);
     //*verify token
     const verifyToken = randomBytes(32).toString("hex");
-    const verifyKey = `verify_key: ${verifyToken}`;
+    const verifyKey = `verify_key:${verifyToken}`;
     const radisData = {
       ...userData,
       password: hashedPassword,
@@ -149,7 +149,7 @@ export class UserService {
       throw new ApiError(HTTP_STATUS.NOT_FOUND, "Token not found");
     }
     const verifyKey = `verify_key:${token}`;
-    const userData = await redis.get(JSON.parse(verifyKey));
+    const userData = await redis.get(verifyKey);
 
     if (!userData) {
       throw new ApiError(

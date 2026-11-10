@@ -117,6 +117,7 @@ const Otp = ({
 
       onVerified();
     } catch (error) {
+      
       toast.error(
         typeof error === "string"
           ? error

@@ -165,9 +165,12 @@ Use the verification code below to complete your sign-in to Authentication App.
 
 export const getVerifyEmailHtml = (email: string, token: string) => {
   const appName = process.env.APP_NAME || "E-commerce";
-  const baseUrl = process.env.CORS_ORIGINS || "http://localhost:5173";
-  const verifyUrl = `${baseUrl.replace(/\/+$/, "")}/token/${encodeURIComponent(token)}`;
 
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+
+  const baseUrl = frontendUrl.replace(/\/+$/, "");
+
+  const verifyUrl = `${baseUrl}/token/${encodeURIComponent(token)}`;
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>

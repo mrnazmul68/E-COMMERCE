@@ -22,8 +22,8 @@ const Login = () => {
     event.preventDefault();
 
     try {
-      const response = await dispatch(loginUser({ email, password })).unwrap();
-      toast.success(response);
+      const message = await dispatch(loginUser({ email, password })).unwrap();
+      toast.success(message);
       setShowOtp(true);
       setPassword("");
     } catch (error) {
@@ -32,6 +32,8 @@ const Login = () => {
       );
     }
   };
+
+
 
   return (
     <section className="w-full pt-16 py-20 min-h-screen bg-[#fdfcfb] text-black flex items-center justify-center px-4">
@@ -96,7 +98,7 @@ const Login = () => {
 
         <p className="text-sm text-center mt-6 text-gray-500">
           Don&apos;t have an account?{" "}
-          <Link to="/register" className="text-black font-medium">
+          <Link to="/register" className="text-black font-medium cursor-pointer">
             Register
           </Link>
         </p>

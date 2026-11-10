@@ -1,17 +1,18 @@
 import { useState, type FormEvent } from "react";
 import { FaEnvelope, FaLock, FaUser } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import type { AppDispatch, RootState } from "../redux/store";
 import { registerUser } from "../redux/slices/authSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
+import ConfirmationPage from "../components/common/ConirmationPage";
 
 const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  const navigate = useNavigate();
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
 
   //Redux state
   const dispatch = useDispatch<AppDispatch>();
@@ -21,25 +22,28 @@ const Register = () => {
     event.preventDefault();
 
     try {
-      const user = await dispatch(
+      const message = await dispatch(
         registerUser({ name, email, password }),
       ).unwrap();
-      toast.success(`Welcome, ${user.name}! Account created successfully.`);
+
+      setRegisteredEmail(email);
+      setShowConfirmation(true);
+      toast.success(message);
       setName("");
       setEmail("");
       setPassword("");
-      navigate("/", { replace: true });
     } catch (error) {
       toast.error(
         typeof error === "string"
           ? error
-          : "Registration failed. Please try again.",
+          : "Register failed. Please try again.",
       );
     }
   };
 
   return (
     <section className="w-full pt-16 py-20 min-h-screen text-black bg-[#fdfcfb] flex items-center justify-center px-4">
+      <ConfirmationPage open={showConfirmation} email={registeredEmail} />
       <form
         onSubmit={handleSignup}
         className="w-full max-w-md bg-white shadow-lg rounded-xl p-8"
@@ -99,14 +103,14 @@ const Register = () => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-black text-white py-3 rounded hover:bg-gray-800 transition disabled:opacity-50"
+          className="w-full cursor-pointer bg-black text-white py-3 rounded hover:bg-gray-800 transition disabled:opacity-50"
         >
           {loading ? "Creating Account..." : "Sign Up"}
         </button>
 
         <p className="text-sm text-center mt-6 text-gray-500">
           Already have an account?{" "}
-          <Link to="/login" className="text-black font-medium">
+          <Link to="/login" className="text-black font-medium cursor-pointer\">
             Login
           </Link>
         </p>

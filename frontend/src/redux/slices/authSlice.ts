@@ -40,6 +40,7 @@ interface RegisterCredentials {
   password: string;
 }
 
+
 export interface UserApiResponse {
   success: boolean;
   statusCode: number;
@@ -115,7 +116,7 @@ export const verifyLoginUser = createAsyncThunk<
 
 // Register thunk
 export const registerUser = createAsyncThunk<
-  User,
+  string,
   RegisterCredentials,
   { rejectValue: string }
 >("auth/register", async (userData, { rejectWithValue }) => {
@@ -124,6 +125,32 @@ export const registerUser = createAsyncThunk<
       "/auth/register",
       userData,
     );
+    const { message } = response.data;
+
+    return message;
+  } catch (error: unknown) {
+    if (axios.isAxiosError<{ message?: string }>(error)) {
+      return rejectWithValue(
+        error.response?.data?.message || "Registration failed",
+      );
+    }
+
+    return rejectWithValue("Something went wrong");
+  }
+});
+
+// Verify Register thunk
+
+export const verifyRegisterUser = createAsyncThunk<
+  User,
+  string,
+  { rejectValue: string }
+>("auth/register/verify-user", async (token, { rejectWithValue }) => {
+  try {
+    const response = await api.post<UserApiResponse>(
+      `/auth/register/verify-user/${token}`,
+    );
+
     const { user, accessToken } = response.data.data;
 
     setAccessToken(accessToken);
@@ -204,8 +231,7 @@ const authSlice = createSlice({
   },
 
   extraReducers: (builder) => {
-    //Login user
-    // Login
+    //*Login user
     builder
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
@@ -219,7 +245,7 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload ?? "Login failed";
       });
-    // Verify user login
+    //* Verify user login
     builder
       .addCase(verifyLoginUser.pending, (state) => {
         state.loading = true;
@@ -237,25 +263,39 @@ const authSlice = createSlice({
         state.status = state.user ? "authenticated" : "guest";
       });
 
-    // Register
+    // *Register
     builder
       .addCase(registerUser.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(registerUser.fulfilled, (state, action) => {
+      .addCase(registerUser.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Register failed";
+      });
+    //*verify register
+    builder
+      .addCase(verifyRegisterUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyRegisterUser.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload;
         state.status = "authenticated";
         state.error = null;
       })
-      .addCase(registerUser.rejected, (state, action) => {
+      .addCase(verifyRegisterUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload ?? "Registration failed";
         state.status = state.user ? "authenticated" : "guest";
       });
 
-    // Logout
+    //* Logout
     builder
       .addCase(logoutUser.pending, (state) => {
         state.loading = true;
