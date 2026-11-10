@@ -69,7 +69,6 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 export const verifyRegisterUser = asyncHandler(
   async (req: Request, res: Response) => {
     const { token } = req.params;
-    console.log(token)
 
     const { user, accessToken, refreshToken, refreshTokenExpiresAt } =
       await userService.verifyRegisterUser(

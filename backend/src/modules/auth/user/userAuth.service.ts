@@ -171,7 +171,7 @@ export class UserService {
 
   //todo: login
   async login(userData: UserLoginInput, context: SessionContext = {}) {
-    const rateLimiter = `login_rate_limit: ${context.ip}:${userData.email}`;
+    const rateLimiter = `login_rate_limit:${context.ip}:${userData.email}`;
 
     if (await redis.get(rateLimiter)) {
       throw new ApiError(
