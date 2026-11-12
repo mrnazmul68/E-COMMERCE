@@ -1,11 +1,15 @@
 import { Router } from "express";
 import {
+  enableTwoFactor,
+  googleCallback,
+  googleStart,
   login,
   logout,
   logoutAll,
   profile,
   refreshToken,
   register,
+  verifyEnableTwoFactor,
   verifyLoginUser,
   verifyRegisterUser,
 } from "@modules/auth/user/userAuth.controller.js";
@@ -18,6 +22,7 @@ import { protect } from "@middlewares/protect.middleware.js";
 import { verifyOrigin } from "@middlewares/verifyOrigin.middleware.js";
 import {
   authLimiter,
+  googleAuthLimiter,
   refreshLimiter,
 } from "@middlewares/rateLimit.middleware.js";
 
@@ -28,6 +33,16 @@ userRoute.use((_req, res, next) => {
   res.set("Cache-Control", "no-store");
   next();
 });
+
+/*
+ * Google OAuth deliberately does NOT use verifyOrigin. Both routes are
+ * top-level browser navigations; Google's callback arrives without an Origin
+ * header and with Sec-Fetch-Site: cross-site, which verifyOrigin blocks.
+ * Protection comes from a single-use state value bound to an httpOnly cookie
+ * plus an explicit rate limiter.
+ */
+userRoute.get("/google", googleAuthLimiter, googleStart);
+userRoute.get("/google/callback", googleAuthLimiter, googleCallback);
 
 //@route POST /api/v1/auth/register
 //@desc Register user
@@ -75,6 +90,17 @@ userRoute.post(
 //@desc Get current user profile
 //@access Private
 userRoute.get("/profile", protect, profile);
+
+//@route POST /api/v1/auth/2fa/enable/request
+//@desc sent otp
+//@access Private
+userRoute.post("/2fa/enable/request", protect, enableTwoFactor);
+
+//@route POST /api/v1/auth/2fa/enable/verify
+//@desc Verify 2FA otp
+//@access Private
+userRoute.post("/2fa/enable/verify", protect, verifyEnableTwoFactor);
+
 
 //@route POST /api/v1/auth/refresh
 //@desc Rotate refresh token and issue a new access token

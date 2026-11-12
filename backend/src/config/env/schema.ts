@@ -24,6 +24,10 @@ export const envSchema = z.object({
 
   COOKIE_DOMAIN: z.string().trim().optional(),
 
+  FRONTEND_URL: z
+    .url("Frontend URL must be a valid URL")
+    .default("http://localhost:5173"),
+
   JWT_ACCESS_TTL: z
     .string()
     .trim()
@@ -75,6 +79,21 @@ export const envSchema = z.object({
     .string()
     .min(8, "Admin password must be at least 8 characters")
     .default("Admin@12345"),
+
+  // Google OAuth
+  GOOGLE_CLIENT_ID: z
+    .string()
+    .trim()
+    .min(1, "Google client id is required")
+    .max(500, "Google client id cannot exceed 500 characters"),
+
+  GOOGLE_CLIENT_SECRET: z
+    .string()
+    .trim()
+    .min(1, "Google client secret is required")
+    .max(500, "Google client secret cannot exceed 500 characters"),
+
+  GOOGLE_CALLBACK_URL: z.url("Google callback URL must be a valid URL"),
 
   // Cloudinary
   CLOUDINARY_CLOUD_NAME: z

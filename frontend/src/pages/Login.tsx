@@ -1,18 +1,21 @@
-
 import { useState, type FormEvent } from "react";
 import { FaEnvelope, FaLock } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
-import { loginUser } from "../redux/slices/authSlice";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { loginUser, verifyLoginUser } from "../redux/slices/authSlice";
 import type { AppDispatch, RootState } from "../redux/store";
 import { toast } from "sonner";
 import Otp from "../components/common/Opt";
+import GoogleAuthButton from "../components/auth/GoogleAuthButton";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showOtp, setShowOtp] = useState(false);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo =(location.state as { from?: { pathname?: string } } | null)?.from
+      ?.pathname ?? "/";
 
   const dispatch = useDispatch<AppDispatch>();
 
@@ -22,10 +25,17 @@ const Login = () => {
     event.preventDefault();
 
     try {
-      const message = await dispatch(loginUser({ email, password })).unwrap();
-      toast.success(message);
-      setShowOtp(true);
+      const result = await dispatch(loginUser({ email, password })).unwrap();
       setPassword("");
+
+      if (result.requiresOtp) {
+        toast.success(result.message);
+        setShowOtp(true);
+        return;
+      }
+
+      toast.success("Login successful!");
+      navigate(returnTo);
     } catch (error) {
       toast.error(
         typeof error === "string" ? error : "Login failed. Please try again.",
@@ -33,17 +43,18 @@ const Login = () => {
     }
   };
 
-
-
   return (
     <section className="w-full pt-16 py-20 min-h-screen bg-[#fdfcfb] text-black flex items-center justify-center px-4">
       <Otp
         open={showOtp}
         email={email}
+        loading={loading}
         onClose={() => setShowOtp(false)}
-        onVerified={() => {
+        onSubmit={async (otp) => {
+          await dispatch(verifyLoginUser({ email, otp })).unwrap();
+          toast.success("Login successful!");
           setShowOtp(false);
-          navigate("/");
+          navigate(returnTo);
         }}
       />
       <form
@@ -96,9 +107,22 @@ const Login = () => {
           {loading ? "Signing In..." : "Sign In"}
         </button>
 
+        <div className="my-6 flex items-center gap-3">
+          <span className="h-px flex-1 bg-gray-200" />
+          <span className="text-xs uppercase tracking-wider text-gray-400">
+            or
+          </span>
+          <span className="h-px flex-1 bg-gray-200" />
+        </div>
+        {/* Google auth button */}
+        <GoogleAuthButton returnTo={returnTo} />
+
         <p className="text-sm text-center mt-6 text-gray-500">
-          Don&apos;t have an account?{" "}
-          <Link to="/register" className="text-black font-medium cursor-pointer">
+          Don't have an account?{" "}
+          <Link
+            to="/register"
+            className="text-black font-medium cursor-pointer"
+          >
             Register
           </Link>
         </p>

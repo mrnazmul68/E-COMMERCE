@@ -20,6 +20,7 @@ import AuthBootstrap from "./auth/AuthBootstrap";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { PublicOnlyRoute } from "./auth/PublicOnlyRoute";
 import VerifyEmailPage from "./components/common/EmailVerification";
+import GoogleAuthCallback from "./pages/GoogleAuthCallback";
 
 const App = () => {
   return (
@@ -28,6 +29,12 @@ const App = () => {
 
       <Routes>
         <Route element={<AuthBootstrap />}>
+          {/*
+           * Kept outside PublicOnlyRoute so the page can read the OAuth error
+           * or returnTo before the authenticated redirect fires.
+           */}
+          <Route path="/auth/callback" element={<GoogleAuthCallback />} />
+
           <Route path="/" element={<UserLayout />}>
             {/* Public storefront */}
             <Route index element={<Home />} />

@@ -37,9 +37,21 @@ const userSchema = new mongoose.Schema(
       match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, VALIDATION.EMAIL.INVALID_MESSAGE],
     },
 
+    /*
+     * Google's `sub` claim. It is intentionally absent for password accounts;
+     * do not give it a default value, otherwise the sparse unique index would
+     * treat every password account as a duplicate `null`.
+     */
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      maxlength: [255, "Google id cannot exceed 255 characters"],
+    },
+
     password: {
       type: String,
-      required: [true, VALIDATION.PASSWORD.REQUIRED_MESSAGE],
       select: false,
 
       minlength: [
@@ -69,6 +81,10 @@ const userSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    twoFactorEnabled: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
@@ -77,6 +93,22 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.index({ role: 1 });
+
+/*
+ * Google-only accounts authenticate through Google and intentionally have no
+ * password. Every other account (including linked accounts) must still have
+ * one.
+ */
+userSchema.pre("validate", function () {
+  /*
+   * Only enforce this for new documents. Existing documents are often loaded
+   * without the password field because it is `select: false`; validating them
+   * again would incorrectly fail unrelated updates.
+   */
+  if (this.isNew && !this.googleId && !this.password) {
+    this.invalidate("password", VALIDATION.PASSWORD.REQUIRED_MESSAGE);
+  }
+});
 
 export type UserType = InferSchemaType<typeof userSchema>;
 export type UserDocument = HydratedDocumentFromSchema<typeof userSchema>;

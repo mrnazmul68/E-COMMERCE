@@ -1,15 +1,12 @@
 import { useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
-import type { AppDispatch, RootState } from "../../redux/store";
-import { verifyLoginUser } from "../../redux/slices/authSlice";
-
 
 interface OtpProps {
   open: boolean;
   email: string;
+  loading: boolean;
   onClose: () => void;
-  onVerified: () => void;
+  onSubmit: (otp: string) => Promise<void>;
 }
 
 const OTP_LENGTH = 6;
@@ -17,15 +14,10 @@ const OTP_LENGTH = 6;
 const Otp = ({
   open,
   email,
+  loading,
   onClose,
-  onVerified,
+  onSubmit,
 }: OtpProps) => {
-  const dispatch = useDispatch<AppDispatch>();
-
-  const { loading } = useSelector(
-    (state: RootState) => state.auth,
-  );
-
   const [otp, setOtp] = useState<string[]>(
     Array(OTP_LENGTH).fill(""),
   );
@@ -94,8 +86,7 @@ const Otp = ({
     inputRefs.current[nextIndex]?.focus();
   };
 
-  // Verify OTP
-  const handleVerify = async () => {
+  const handleSubmit = async () => {
     const code = otp.join("");
 
     if (code.length !== OTP_LENGTH) {
@@ -104,20 +95,8 @@ const Otp = ({
     }
 
     try {
-      await dispatch(
-        verifyLoginUser({
-          email,
-          otp: code,
-        }),
-      ).unwrap();
-
-      toast.success("Login successful!");
-
-      setOtp(Array(OTP_LENGTH).fill(""));
-
-      onVerified();
+      await onSubmit(code);
     } catch (error) {
-      
       toast.error(
         typeof error === "string"
           ? error
@@ -215,7 +194,7 @@ const Otp = ({
         {/* Verify button */}
         <button
           type="button"
-          onClick={handleVerify}
+          onClick={handleSubmit}
           disabled={
             loading || otp.some((digit) => digit === "")
           }

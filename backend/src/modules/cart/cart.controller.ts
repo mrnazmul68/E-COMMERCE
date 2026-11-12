@@ -61,7 +61,7 @@ export const getCartItems = asyncHandler(
 export const mergeCartItems = asyncHandler(
   async (req: Request, res: Response) => {
     const { guestId } = req.body;
-    const userId = req.user?.id;
+    const userId = req.user?._id?.toString();
     if (!userId) {
       throw new ApiError(HTTP_STATUS.NOT_FOUND, "User id not found");
     }

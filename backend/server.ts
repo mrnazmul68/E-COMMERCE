@@ -9,6 +9,7 @@ import { beginShutdown, isShuttingDown } from "@shared/lifeCycle.js";
 import type { AddressInfo } from "node:net";
 import { connectCloudinary } from "@config/connectCloudinary.js";
 import { SessionModel } from "@modules/auth/models/session.model.js";
+import { User } from "@modules/auth/models/auth.model.js";
 
 const CONNECTION_CHECKING_INTERVAL = 5_000;
 const KEEP_ALIVE_TIMEOUT = 65_000;
@@ -197,10 +198,12 @@ const startServer = async (): Promise<void> => {
 
   /*
    * autoIndex is disabled in production. Refresh sessions need their TTL
-   * index so expired/revoked rows are cleaned up automatically.
+   * index so expired/revoked rows are cleaned up automatically, and the user
+   * collection needs its unique Google account index.
    */
   if (env.isProduction) {
     await SessionModel.createIndexes();
+    await User.createIndexes();
   }
 
   await connectCloudinary();

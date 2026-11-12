@@ -29,3 +29,16 @@ export const refreshLimiter = rateLimit({
   legacyHeaders: false,
   message: rateLimitResponse,
 });
+
+/*
+ * OAuth routes respond with redirects on both success and failure, so the
+ * default `skipSuccessfulRequests` behaviour of `authLimiter` would never
+ * count failed attempts. Keep every hit in the window.
+ */
+export const googleAuthLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: rateLimitResponse,
+});

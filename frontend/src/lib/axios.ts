@@ -23,6 +23,7 @@ export interface SessionUser {
   name: string;
   email: string;
   role: "customer" | "admin";
+  twoFactorEnabled: boolean;
   createdAt: string;
 }
 

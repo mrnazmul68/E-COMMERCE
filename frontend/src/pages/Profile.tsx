@@ -18,13 +18,19 @@ import {
   getOrderTotal,
   type AccountProfile,
 } from "../data/account";
-import { useSelector } from "react-redux";
-import type { RootState } from "../redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "../redux/store";
+import Otp from "../components/common/Opt";
+import {
+  enableTwoFactor,
+  verifyEnableTwoFactor,
+} from "../redux/slices/authSlice";
 
 const Profile = () => {
   const [profile, setProfile] = useState<AccountProfile>(demoProfile);
   const [isEditing, setIsEditing] = useState(false);
-
+  const [showOtp, setShowOtp] = useState(false);
+  const dispatch = useDispatch<AppDispatch>();
   const updateField = (
     field: "firstName" | "lastName" | "email" | "phone",
     value: string,
@@ -33,7 +39,7 @@ const Profile = () => {
   };
 
   //User data
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user, loading } = useSelector((state: RootState) => state.auth);
 
   const handleSave = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -46,8 +52,41 @@ const Profile = () => {
     (order) => order.status === "In transit" || order.status === "Processing",
   ).length;
 
+  //handle 2FA toggle
+  const handleTwoFactor = async () => {
+    try {
+      const message = await dispatch(enableTwoFactor()).unwrap();
+      toast.success(message);
+      setShowOtp(true);
+    } catch (error) {
+      toast.error(
+        typeof error === "string" ? error : "Something went wrong",
+      );
+    }
+  };
+
+  const handleTwoFactorVerify = async (otp: string) => {
+    if (!user) {
+      throw new Error("You must be signed in to update two-factor authentication");
+    }
+
+    const result = await dispatch(
+      verifyEnableTwoFactor({ email: user.email, otp }),
+    ).unwrap();
+
+    toast.success(result.message);
+    setShowOtp(false);
+  };
+
   return (
     <main className="min-h-screen bg-[#080808] px-4 py-10 text-white sm:px-8 sm:py-14 lg:px-12">
+      <Otp
+        open={showOtp}
+        email={user?.email ?? ""}
+        loading={loading}
+        onClose={() => setShowOtp(false)}
+        onSubmit={handleTwoFactorVerify}
+      />
       <div className="mx-auto max-w-7xl">
         <div className="mb-9">
           <div className="mb-3 flex items-center gap-2 text-xs text-neutral-500">
@@ -92,6 +131,38 @@ const Profile = () => {
               >
                 <MapPin size={17} /> Saved address
               </a>
+              {/* Two factor auth button */}
+              <button
+                type="button"
+                onClick={handleTwoFactor}
+                className="mt-5 w-full rounded-xl border border-orange-500/15 bg-orange-500/5 p-3 text-left transition hover:border-orange-500/30 hover:bg-orange-500/10"
+              >
+                <div className="flex items-start gap-2.5">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 text-orange-400">
+                    <ShieldCheck size={18} />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold leading-5 text-neutral-200">
+                      Two-Factor Authentication
+                    </p>
+                  </div>
+                  <div className="border border-green-500 text-green-500 rounded-2xl px-2 font-bold">
+                    {user?.twoFactorEnabled ? "on" : "off"}
+                  </div>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between border-t border-white/6 pt-3">
+                  <span className="text-[11px] text-neutral-500">
+                    Account security
+                  </span>
+
+                  <span className="inline-flex cursor-pointer items-center gap-1 text-xs font-semibold text-orange-400">
+                    {user?.twoFactorEnabled ? "Disable" : "Enable"}{" "}
+                    <ArrowRight size={13} />
+                  </span>
+                </div>
+              </button>
             </nav>
             <div className="mt-5 rounded-xl border border-white/6 bg-black/40 p-3.5">
               <div className="flex items-center gap-2 text-xs font-medium text-neutral-300">

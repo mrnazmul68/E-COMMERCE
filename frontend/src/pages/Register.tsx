@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { FaEnvelope, FaLock, FaUser } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import type { AppDispatch, RootState } from "../redux/store";
 import { registerUser } from "../redux/slices/authSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import ConfirmationPage from "../components/common/ConirmationPage";
+import GoogleAuthButton from "../components/auth/GoogleAuthButton";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -13,6 +14,10 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
+  const location = useLocation();
+  const returnTo =
+    (location.state as { from?: { pathname?: string } } | null)?.from
+      ?.pathname ?? "/";
 
   //Redux state
   const dispatch = useDispatch<AppDispatch>();
@@ -107,6 +112,16 @@ const Register = () => {
         >
           {loading ? "Creating Account..." : "Sign Up"}
         </button>
+
+        <div className="my-6 flex items-center gap-3">
+          <span className="h-px flex-1 bg-gray-200" />
+          <span className="text-xs uppercase tracking-wider text-gray-400">
+            or
+          </span>
+          <span className="h-px flex-1 bg-gray-200" />
+        </div>
+
+        <GoogleAuthButton returnTo={returnTo} />
 
         <p className="text-sm text-center mt-6 text-gray-500">
           Already have an account?{" "}

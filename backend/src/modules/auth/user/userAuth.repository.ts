@@ -21,6 +21,25 @@ export class UserRepository {
     return await this.model.findOne({ email }).select("+password").exec();
   }
 
+  //find by Google's stable account identifier (`sub`)
+  async findByGoogleId(googleId: string): Promise<UserDocument | null> {
+    return await this.model.findOne({ googleId }).exec();
+  }
+
+  //link Google to an existing password account
+  async linkGoogleId(
+    id: string,
+    googleId: string,
+  ): Promise<UserDocument | null> {
+    return await this.model
+      .findOneAndUpdate(
+        { _id: id, googleId: { $exists: false } },
+        { $set: { googleId } },
+        { new: true, runValidators: true },
+      )
+      .exec();
+  }
+
   //find by id
   async findById(id: string, selectField = ""): Promise<UserDocument | null> {
     return await this.model.findOne({ _id: id }).select(selectField).exec();

@@ -12,6 +12,7 @@ export interface User {
   name: string;
   email: string;
   role: "customer" | "admin";
+  twoFactorEnabled: boolean;
   createdAt: string;
 }
 
@@ -29,6 +30,7 @@ interface LoginCredentials {
   email: string;
   password: string;
 }
+
 interface VerifyLoginCredentials {
   email: string;
   otp: string;
@@ -40,7 +42,6 @@ interface RegisterCredentials {
   password: string;
 }
 
-
 export interface UserApiResponse {
   success: boolean;
   statusCode: number;
@@ -50,6 +51,17 @@ export interface UserApiResponse {
   };
   message: string;
 }
+
+interface LoginApiResponse {
+  data:
+    | { requiresOtp: true }
+    | { requiresOtp: false; user: User; accessToken: string };
+  message: string;
+}
+
+type LoginResult =
+  | { requiresOtp: true; message: string }
+  | { requiresOtp: false; user: User };
 
 // Remove credentials left behind by the previous localStorage-based auth.
 localStorage.removeItem("accessToken");
@@ -70,15 +82,28 @@ const initialState: AuthState = {
 
 // Login thunk
 export const loginUser = createAsyncThunk<
-  string,
+  LoginResult,
   LoginCredentials,
   { rejectValue: string }
 >("auth/login", async (userData, { rejectWithValue }) => {
   try {
-    const response = await api.post<UserApiResponse>("/auth/login", userData);
-    const { message } = response.data;
+    const response = await api.post<LoginApiResponse>("/auth/login", userData);
+    const result = response.data.data;
 
-    return message;
+    if (result.requiresOtp) {
+      return {
+        requiresOtp: true,
+        message: response.data.message,
+      };
+    }
+
+    setAccessToken(result.accessToken);
+    broadcastSession({ accessToken: result.accessToken, user: result.user });
+
+    return {
+      requiresOtp: false,
+      user: result.user,
+    };
   } catch (error: unknown) {
     if (axios.isAxiosError<{ message?: string }>(error)) {
       return rejectWithValue(error.response?.data?.message || "Login failed");
@@ -108,6 +133,50 @@ export const verifyLoginUser = createAsyncThunk<
   } catch (error: unknown) {
     if (axios.isAxiosError<{ message?: string }>(error)) {
       return rejectWithValue(error.response?.data?.message || "Login failed");
+    }
+
+    return rejectWithValue("Something went wrong");
+  }
+});
+
+//enableTwoFactor
+export const enableTwoFactor = createAsyncThunk<
+  string,
+  void,
+  { rejectValue: string }
+>("auth/2fa/enable/request", async (_, { rejectWithValue }) => {
+  try {
+    const response = await api.post<UserApiResponse>(
+      "/auth/2fa/enable/request",
+    );
+    const { message } = response.data;
+
+    return message;
+  } catch (error: unknown) {
+    if (axios.isAxiosError<{ message?: string }>(error)) {
+      return rejectWithValue(error.response?.data?.message || "Failed");
+    }
+
+    return rejectWithValue("Something went wrong");
+  }
+});
+// verifyEnableTwoFactor
+export const verifyEnableTwoFactor = createAsyncThunk<
+  { twoFactorEnabled: boolean; message: string },
+  VerifyLoginCredentials,
+  { rejectValue: string }
+>("auth/2fa/enable/verify", async (userData, { rejectWithValue }) => {
+  try {
+    const response = await api.post<{ data: boolean; message: string }>(
+      "/auth/2fa/enable/verify",
+      userData,
+    );
+    const { message } = response.data;
+
+    return { twoFactorEnabled: response.data.data, message };
+  } catch (error: unknown) {
+    if (axios.isAxiosError<{ message?: string }>(error)) {
+      return rejectWithValue(error.response?.data?.message || "Failed");
     }
 
     return rejectWithValue("Something went wrong");
@@ -231,15 +300,50 @@ const authSlice = createSlice({
   },
 
   extraReducers: (builder) => {
+    //*2FA otp send
+    builder
+      .addCase(enableTwoFactor.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(enableTwoFactor.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(enableTwoFactor.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Failed";
+      });
+    //*2FA otp verify
+    builder
+      .addCase(verifyEnableTwoFactor.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyEnableTwoFactor.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+        if (state.user) {
+          state.user.twoFactorEnabled = action.payload.twoFactorEnabled;
+        }
+      })
+      .addCase(verifyEnableTwoFactor.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Failed";
+      });
     //*Login user
     builder
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(loginUser.fulfilled, (state) => {
+      .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.error = null;
+        if (!action.payload.requiresOtp) {
+          state.user = action.payload.user;
+          state.status = "authenticated";
+        }
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;

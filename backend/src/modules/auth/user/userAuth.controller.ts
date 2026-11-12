@@ -5,6 +5,19 @@ import { ApiResponse } from "@utils/apiResponse.js";
 import { HTTP_STATUS } from "@shared/httpcode.js";
 import { ApiError } from "@utils/apiError.js";
 import { env } from "@config/env.js";
+import { logger } from "@utils/logger.js";
+import {
+  GOOGLE_STATE_COOKIE_NAME,
+  GOOGLE_STATE_COOKIE_PATH,
+  GOOGLE_STATE_TTL_SECONDS,
+  GoogleOAuthError,
+  buildFrontendCallbackUrl,
+  consumeGoogleState,
+  createGoogleAuthorizationUrl,
+  exchangeGoogleCode,
+  normalizeReturnTo,
+  type GoogleOAuthFailureReason,
+} from "@modules/auth/google/google.oauth.js";
 
 const REFRESH_COOKIE_NAME = "refreshToken";
 const REFRESH_COOKIE_PATH = "/api/v1/auth";
@@ -47,6 +60,39 @@ const clearRefreshCookie = (res: Response): void => {
   res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieBaseOptions);
 };
 
+/*
+ * The OAuth state cookie is scoped to the Google endpoints and intentionally
+ * uses SameSite=Lax. Google redirects back with a top-level GET, which Lax
+ * allows while still blocking cross-site subrequests.
+ */
+const googleStateCookieBaseOptions: CookieOptions = {
+  httpOnly: true,
+  secure: env.isProduction,
+  sameSite: "lax",
+  path: GOOGLE_STATE_COOKIE_PATH,
+  ...(env.COOKIE_DOMAIN ? { domain: env.COOKIE_DOMAIN } : {}),
+};
+
+const googleStateCookieOptions = (): CookieOptions => ({
+  ...googleStateCookieBaseOptions,
+  maxAge: GOOGLE_STATE_TTL_SECONDS * 1000,
+});
+
+const clearGoogleStateCookie = (res: Response): void => {
+  res.clearCookie(GOOGLE_STATE_COOKIE_NAME, googleStateCookieBaseOptions);
+};
+
+const googleFailureReason = (error: unknown): GoogleOAuthFailureReason => {
+  if (error instanceof GoogleOAuthError) return error.reason;
+
+  if (error instanceof ApiError) {
+    if (error.statusCode === HTTP_STATUS.CONFLICT) return "account_conflict";
+    if (error.statusCode === HTTP_STATUS.FORBIDDEN) return "account_blocked";
+  }
+
+  return "google_auth_failed";
+};
+
 //*No store
 //Using this in router, so i can remove it if want
 const noStore = (res: Response): void => {
@@ -64,6 +110,81 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 
   return new ApiResponse(HTTP_STATUS.CREATED, null, message).send(res);
 });
+
+//Start Google OAuth
+export const googleStart = asyncHandler(async (req: Request, res: Response) => {
+  const returnTo = normalizeReturnTo(req.query.returnTo);
+  const { state, url } = await createGoogleAuthorizationUrl(returnTo);
+
+  res.cookie(GOOGLE_STATE_COOKIE_NAME, state, googleStateCookieOptions());
+  noStore(res);
+
+  return res.redirect(url);
+});
+
+//Google OAuth callback
+export const googleCallback = asyncHandler(
+  async (req: Request, res: Response) => {
+    const stateFromQuery =
+      typeof req.query.state === "string" ? req.query.state : undefined;
+    const stateFromCookie = req.cookies?.[GOOGLE_STATE_COOKIE_NAME] as
+      | string
+      | undefined;
+    const oauthError =
+      typeof req.query.error === "string" ? req.query.error : undefined;
+
+    if (oauthError) {
+      clearGoogleStateCookie(res);
+
+      const reason: GoogleOAuthFailureReason =
+        oauthError === "access_denied" ? "access_denied" : "google_auth_failed";
+
+      return res.redirect(buildFrontendCallbackUrl({ error: reason }));
+    }
+
+    let returnTo: string | undefined;
+
+    try {
+      const code =
+        typeof req.query.code === "string" ? req.query.code : undefined;
+
+      if (!code) {
+        throw new GoogleOAuthError(
+          "google_auth_failed",
+          "Google authorization code is missing",
+        );
+      }
+
+      const state = await consumeGoogleState(stateFromQuery, stateFromCookie);
+      returnTo = state.returnTo;
+
+      const profile = await exchangeGoogleCode(code, state.codeVerifier);
+      const { refreshToken, refreshTokenExpiresAt } =
+        await userService.loginWithGoogle(profile, getSessionContext(req));
+
+      setRefreshCookie(res, refreshToken, refreshTokenExpiresAt);
+      clearGoogleStateCookie(res);
+      noStore(res);
+
+      return res.redirect(
+        buildFrontendCallbackUrl(returnTo ? { returnTo } : {}),
+      );
+    } catch (error) {
+      clearGoogleStateCookie(res);
+
+      const reason = googleFailureReason(error);
+
+      logger.warn({ err: error, reason }, "Google authentication failed");
+
+      return res.redirect(
+        buildFrontendCallbackUrl({
+          error: reason,
+          ...(returnTo ? { returnTo } : {}),
+        }),
+      );
+    }
+  },
+);
 
 //Verify register User
 export const verifyRegisterUser = asyncHandler(
@@ -91,15 +212,34 @@ export const verifyRegisterUser = asyncHandler(
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
-  const { message } = await userService.login(
+  const result = await userService.login(
     { email, password },
     getSessionContext(req),
   );
 
-  return new ApiResponse(HTTP_STATUS.OK, null, message).send(res);
+  if (result.requiresOtp) {
+    return new ApiResponse(
+      HTTP_STATUS.OK,
+      { requiresOtp: true },
+      result.message,
+    ).send(res);
+  }
+
+  setRefreshCookie(res, result.refreshToken, result.refreshTokenExpiresAt);
+  noStore(res);
+
+  return new ApiResponse(
+    HTTP_STATUS.OK,
+    {
+      requiresOtp: false,
+      user: result.user,
+      accessToken: result.accessToken,
+    },
+    "User logged in successfully",
+  ).send(res);
 });
 
-//todo: login verification
+//login verification
 export const verifyLoginUser = asyncHandler(
   async (req: Request, res: Response) => {
     const { otp, email } = req.body;
@@ -163,6 +303,29 @@ export const profile = asyncHandler(async (req: Request, res: Response) => {
     "Profile fetched successfully",
   ).send(res);
 });
+
+//enableTwoFactor
+export const enableTwoFactor = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { message } = await userService.enableTwoFactor(
+      req.user?.email!,
+      getSessionContext(req),
+    );
+    return new ApiResponse(HTTP_STATUS.OK, null, message).send(res);
+  },
+);
+
+//verify enableTwoFactor
+export const verifyEnableTwoFactor = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { otp, email } = req.body;
+    const { message, data } = await userService.verifyEnableTwoFactor(
+      email,
+      otp,
+    );
+    return new ApiResponse(HTTP_STATUS.OK, data, message).send(res);
+  },
+);
 
 //todo: log out current session
 export const logout = asyncHandler(async (req: Request, res: Response) => {
